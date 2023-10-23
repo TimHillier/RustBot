@@ -76,10 +76,10 @@ impl EventHandler for Handler {
 
 fn get_points_from_emoji(reaction: ReactionType) -> i8 {
     let mut score:i8 = 0;
-    if reaction == emoji::get_emoji("plus_two") {
+    if reaction == emoji::get_emoji("plus_two") || reaction == emoji::get_emoji("manny") {
         score = 2;
     }
-    if reaction == emoji::get_emoji("minus_two") {
+    if reaction == emoji::get_emoji("minus_two") || reaction == emoji::get_emoji("doot") {
         score = -2;
     }
     return score;

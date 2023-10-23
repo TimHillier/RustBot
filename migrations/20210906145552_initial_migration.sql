@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE user (
     user_id TEXT PRIMARY KEY,
     user_name TEXT  NOT NULL,
     score INTEGER,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS user (
     minus_two_received INTEGER
 );
 
-CREATE TABLE IF NOT EXISTS  judgedPosts (
+CREATE TABLE judgedPosts (
     message_id TEXT PRIMARY KEY,
     message_owner TEXT,
     command_caller TEXT,
