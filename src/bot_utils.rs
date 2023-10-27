@@ -25,12 +25,13 @@ pub fn get_random_number() -> i32 {
     return rng.gen_range(0..999);
 }
 
+// A connection to the database.
 pub async fn connect_to_database() -> Pool<Sqlite> {
     let database = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(5)
         .connect_with(
             sqlx::sqlite::SqliteConnectOptions::new()
-                .filename("rustbot.sqlite")
+                .filename("data/rustbot.sqlite")
                 .create_if_missing(true),
         )
         .await
