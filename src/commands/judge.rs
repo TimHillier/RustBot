@@ -11,10 +11,9 @@ use crate::bot_utils::{connect_to_database};
 #[command]
 pub async fn judge(ctx: &Context, msg:&Message) -> CommandResult {
 
-
     // Add Emojis to Judge Command.
-//    let emojis: Vec<ReactionType> = vec![emoji::get_emoji("plus_two"), emoji::get_emoji("minus_two")];
-    let emojis: Vec<ReactionType> = vec![emoji::get_emoji("danny"), emoji::get_emoji("doot")];
+    let emojis: Vec<ReactionType> = vec![emoji::get_emoji("plus_two"), emoji::get_emoji("minus_two")];
+//    let emojis: Vec<ReactionType> = vec![emoji::get_emoji("danny"), emoji::get_emoji("doot")];
     let reaction = emojis.choose(&mut rand::thread_rng()).unwrap().clone();
 
     if msg.referenced_message.is_none() {
