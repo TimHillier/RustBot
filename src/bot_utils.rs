@@ -36,6 +36,7 @@ pub fn get_random_bool(prob: f64) -> bool {
     return rng.gen_bool(prob);
 }
 
+#[allow(dead_code)]
 pub fn get_random_number() -> i32 {
     let mut rng = rand::thread_rng();
     return rng.gen_range(0..999);
@@ -154,14 +155,3 @@ pub async fn score_insert(user_id: &str, user_name:&str) {
         .unwrap();
 }
 
-pub async fn score_get(user_id: &str) {
-    let database = connect_to_database().await;
-    let selected = sqlx::query!(
-        "SELECT user_name, score FROM user WHERE user_id =?",
-        user_id,
-    )
-        .fetch_all(&database)
-        .await
-        .unwrap();
-    println!("{:?}", selected);
-}

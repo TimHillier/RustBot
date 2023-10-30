@@ -3,7 +3,6 @@ mod bot_utils;
 mod emoji;
 
 // Commands;
-use crate::commands::ping::*;
 use crate::commands::smash::*;
 use crate::commands::judge::*;
 use crate::commands::score::*;
@@ -85,10 +84,6 @@ fn get_points_from_emoji(reaction: ReactionType) -> i8 {
     return score;
 }
 
-struct Bot {
-    database: sqlx::SqlitePool,
-}
-
 #[group]
 #[commands(smash, judge, score, top, leader)]
 struct General;
@@ -107,7 +102,6 @@ async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &
 async fn main() {
     let token = bot_utils::get_secret();
     let http = Http::new(&token);
-    let database = bot_utils::connect_to_database().await;
 
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES
