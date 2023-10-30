@@ -7,12 +7,28 @@ use toml;
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
     #[allow(dead_code)]
-    discord_token: String
+    discord_token: String,
+    environment: String
+}
+
+pub fn get_toml() -> String {
+   let toml_str = fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML");
+   return toml_str;
 }
 pub fn get_secret() -> String {
-    let toml_str = fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML");
+    let toml_str = get_toml();
     let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
     return secrets_toml.discord_token;
+}
+
+pub fn get_env() -> String {
+    let toml_str = get_toml();
+    let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
+    let environment = secrets_toml.environment;
+    if environment.is_empty() {
+       return String::from("testing");
+    }
+    return environment;
 }
 
 pub fn get_random_bool(prob: f64) -> bool {
