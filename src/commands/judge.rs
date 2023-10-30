@@ -1,5 +1,5 @@
 use rand::seq::SliceRandom;
-use crate::emoji;
+use crate::{bot_utils, emoji};
 use serenity::framework::standard::macros::command;
 use serenity::framework::standard::{CommandResult};
 use serenity::model::prelude::*;
@@ -12,8 +12,15 @@ use crate::bot_utils::{connect_to_database};
 pub async fn judge(ctx: &Context, msg:&Message) -> CommandResult {
 
     // Add Emojis to Judge Command.
-    let emojis: Vec<ReactionType> = vec![emoji::get_emoji("plus_two"), emoji::get_emoji("minus_two")];
-//    let emojis: Vec<ReactionType> = vec![emoji::get_emoji("danny"), emoji::get_emoji("doot")];
+    let mut emojis: Vec<ReactionType> = vec![];
+    let current_env = bot_utils::get_env();
+    if String::from("live").eq(&current_env) {
+        emojis.push(emoji::get_emoji("plus_two"));
+        emojis.push(emoji::get_emoji("minus_two"));
+    } else {
+        emojis.push(emoji::get_emoji("manny"));
+        emojis.push(emoji::get_emoji("doot"));
+    }
     let reaction = emojis.choose(&mut rand::thread_rng()).unwrap().clone();
 
     if msg.referenced_message.is_none() {

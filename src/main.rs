@@ -3,7 +3,6 @@ mod bot_utils;
 mod emoji;
 
 // Commands;
-use crate::commands::ping::*;
 use crate::commands::smash::*;
 use crate::commands::judge::*;
 use crate::commands::score::*;
@@ -69,7 +68,7 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
+        println!("{} is connected! Environment: {}", ready.user.name, bot_utils::get_env());
     }
 
 }
@@ -83,10 +82,6 @@ fn get_points_from_emoji(reaction: ReactionType) -> i8 {
         score = -2;
     }
     return score;
-}
-
-struct Bot {
-    database: sqlx::SqlitePool,
 }
 
 #[group]
@@ -107,7 +102,6 @@ async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &
 async fn main() {
     let token = bot_utils::get_secret();
     let http = Http::new(&token);
-    let database = bot_utils::connect_to_database().await;
 
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES

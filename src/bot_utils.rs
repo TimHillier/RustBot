@@ -7,12 +7,28 @@ use toml;
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
     #[allow(dead_code)]
-    discord_token: String
+    discord_token: String,
+    environment: String
+}
+
+pub fn get_toml() -> String {
+   let toml_str = fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML");
+   return toml_str;
 }
 pub fn get_secret() -> String {
-    let toml_str = fs::read_to_string("Secrets.toml").expect("Failed to read TOML");
+    let toml_str = get_toml();
     let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
     return secrets_toml.discord_token;
+}
+
+pub fn get_env() -> String {
+    let toml_str = get_toml();
+    let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
+    let environment = secrets_toml.environment;
+    if environment.is_empty() {
+       return String::from("testing");
+    }
+    return environment;
 }
 
 pub fn get_random_bool(prob: f64) -> bool {
@@ -20,6 +36,7 @@ pub fn get_random_bool(prob: f64) -> bool {
     return rng.gen_bool(prob);
 }
 
+#[allow(dead_code)]
 pub fn get_random_number() -> i32 {
     let mut rng = rand::thread_rng();
     return rng.gen_range(0..999);
@@ -138,14 +155,3 @@ pub async fn score_insert(user_id: &str, user_name:&str) {
         .unwrap();
 }
 
-pub async fn score_get(user_id: &str) {
-    let database = connect_to_database().await;
-    let selected = sqlx::query!(
-        "SELECT user_name, score FROM user WHERE user_id =?",
-        user_id,
-    )
-        .fetch_all(&database)
-        .await
-        .unwrap();
-    println!("{:?}", selected);
-}
