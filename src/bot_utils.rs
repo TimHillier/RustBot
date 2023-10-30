@@ -10,7 +10,7 @@ struct SecretsToml {
     discord_token: String
 }
 pub fn get_secret() -> String {
-    let toml_str = fs::read_to_string("Secrets.toml").expect("Failed to read TOML");
+    let toml_str = fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML");
     let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
     return secrets_toml.discord_token;
 }

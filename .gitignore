@@ -1,4 +1,4 @@
 /target
-/Secrets.toml
+/data/Secrets.toml
 /data/rustbot.sqlite
 *.DS_Store
