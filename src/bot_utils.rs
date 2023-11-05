@@ -3,6 +3,10 @@ use rand::Rng;
 use serde::Deserialize;
 use sqlx::{Pool, Sqlite};
 use toml;
+use serenity::{
+    model::{channel::Message},
+    Result as SerenityResult,
+};
 
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
@@ -153,5 +157,12 @@ pub async fn score_insert(user_id: &str, user_name:&str) {
         .execute(&database)
         .await
         .unwrap();
+}
+
+/// Checks that a message got sent correctly.
+pub fn check_msg(result: SerenityResult<Message>) {
+    if let Err(why) = result {
+        println!("Error sending message: {:?}", why);
+    }
 }
 

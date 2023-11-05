@@ -7,16 +7,19 @@ use crate::commands::smash::*;
 use crate::commands::judge::*;
 use crate::commands::score::*;
 use crate::commands::top::*;
+use crate::commands::voice_commands::*;
 
 use std::collections::{HashSet};
 use serenity::http::*;
 use serenity::framework::StandardFramework;
 use serenity::prelude::*;
 use serenity::async_trait;
-use serenity::model::id::{ChannelId, MessageId};
+use serenity::model::id::{ChannelId, GuildId, MessageId};
 use serenity::model::channel::{Message, Reaction, ReactionType};
 use serenity::model::gateway::Ready;
 use serenity::framework::standard::macros::{group, hook};
+use serenity::model::application::command::CommandPermission;
+use songbird::SerenityInit;
 
 struct Handler;
 
@@ -71,6 +74,10 @@ impl EventHandler for Handler {
         println!("{} is connected! Environment: {}", ready.user.name, bot_utils::get_env());
     }
 
+    async fn cache_ready(&self, _ctx: Context, _guilds: Vec<GuildId>) {
+        println!("Cache Ready - Environment: {}", bot_utils::get_env());
+    }
+
 }
 
 fn get_points_from_emoji(reaction: ReactionType) -> i8 {
@@ -85,7 +92,7 @@ fn get_points_from_emoji(reaction: ReactionType) -> i8 {
 }
 
 #[group]
-#[commands(smash, judge, score, top, leader)]
+#[commands(smash, judge, score, top, leader, join, leave, play, stop, queue, skip, resume)]
 struct General;
 
 #[group]
@@ -106,7 +113,9 @@ async fn main() {
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
+        | GatewayIntents::GUILDS
         | GatewayIntents::GUILD_MESSAGE_REACTIONS
+        | GatewayIntents::GUILD_VOICE_STATES
         | GatewayIntents::MESSAGE_CONTENT;
 
     let (owners, bot_id) = match http.get_current_application_info().await
@@ -141,12 +150,15 @@ async fn main() {
         Client::builder(&token, intents)
             .framework(framework)
             .event_handler(Handler)
-            .await.expect("Err creating client");
+            .register_songbird()
+            .await
+            .expect("Err creating client");
 
 
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
     }
+
 }
 async fn get_message_from_id(channel_id:ChannelId, message_id: MessageId) -> serenity::Result<Message> {
     let token = bot_utils::get_secret();
