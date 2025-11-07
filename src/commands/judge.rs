@@ -1,4 +1,3 @@
-use rand::seq::SliceRandom;
 use crate::{bot_utils, emoji};
 use serenity::framework::standard::macros::command;
 use serenity::framework::standard::{CommandResult};
@@ -6,6 +5,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::model::channel::ReactionType;
 use crate::bot_utils::{connect_to_database};
+use rand::seq::IndexedRandom;
 
 
 #[command]
@@ -21,7 +21,7 @@ pub async fn judge(ctx: &Context, msg:&Message) -> CommandResult {
         emojis.push(emoji::get_emoji("manny"));
         emojis.push(emoji::get_emoji("doot"));
     }
-    let reaction = emojis.choose(&mut rand::thread_rng()).unwrap().clone();
+    let reaction = emojis.choose(&mut rand::rng()).unwrap().clone();
 
     if msg.referenced_message.is_none() {
         if let Err(why) = msg.reply(&ctx.http, "Command can only be used as a reply.").await {

@@ -1,17 +1,16 @@
 [package]
 name = "RustBot"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Tim Hillier tim.r.hillier@gmail.com"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-serenity = { version = "0.11.6", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache", "standard_framework", "framework", "utils", "voice"]}
+serenity = { version = "0.12.4", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache", "standard_framework", "framework", "utils", "voice"]}
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 serde = {version = "1.0.188", features = ["derive"]}
-toml = "0.8.2"
+toml = "0.9.8"
 error = "0.1.9"
 context = "3.0.0"
-rand = "0.8.5"
-sqlx = { version = "0.7.2", features = [ "runtime-tokio-rustls", "tls-rustls", "sqlite"] }
-songbird = {git = "https://github.com/serenity-rs/songbird.git", branch = "current", features = ["builtin-queue"]}
-#songbird = {version = "0.3.2"}
+rand = "0.9.2"
+sqlx = { version = "0.8.6", features = [ "runtime-tokio-rustls", "tls-rustls", "sqlite"] }
+poise = "0.6.1"

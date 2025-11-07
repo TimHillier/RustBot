@@ -5,7 +5,7 @@ use serenity::model::id::EmojiId;
 fn get_plus_two() -> ReactionType {
     let plus_two: ReactionType = ReactionType::Custom {
         animated: false,
-        id: EmojiId(924536822472802337),
+        id: EmojiId::new(924536822472802337),
         name: Some("p2".to_string()),
     };
     return plus_two;
@@ -14,7 +14,7 @@ fn get_plus_two() -> ReactionType {
 fn get_minus_two() -> ReactionType {
     let minus_two:ReactionType = ReactionType::Custom {
         animated: false,
-        id: EmojiId(924536784191365120),
+        id: EmojiId::new(924536784191365120),
         name: Some("m2".to_string()),
     };
     return minus_two;
@@ -23,7 +23,7 @@ fn get_minus_two() -> ReactionType {
 fn get_manny() -> ReactionType {
     let manny: ReactionType = ReactionType::Custom {
         animated: false,
-        id: EmojiId(929987409360343051),
+        id: EmojiId::new(929987409360343051),
         name: Some("manny".to_string())
     };
     return manny;
@@ -32,7 +32,7 @@ fn get_manny() -> ReactionType {
 fn get_doot() -> ReactionType {
    let doot: ReactionType = ReactionType::Custom {
        animated: false,
-       id: EmojiId(929985012554682469),
+       id: EmojiId::new(929985012554682469),
        name: Some("doot".to_string())
    } ;
     return doot;

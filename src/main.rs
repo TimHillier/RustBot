@@ -7,7 +7,7 @@ use crate::commands::smash::*;
 use crate::commands::judge::*;
 use crate::commands::score::*;
 use crate::commands::top::*;
-use crate::commands::voice_commands::*;
+use crate::commands::ping::*;
 
 use std::collections::{HashSet};
 use serenity::http::*;
@@ -18,15 +18,17 @@ use serenity::model::id::{ChannelId, GuildId, MessageId};
 use serenity::model::channel::{Message, Reaction, ReactionType};
 use serenity::model::gateway::Ready;
 use serenity::framework::standard::macros::{group, hook};
-use serenity::model::application::command::CommandPermission;
-use songbird::SerenityInit;
+use poise::serenity_prelude as serenity_prelude;
 
 struct Handler;
+struct Data{}
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type _Context<'a> = poise::Context<'a, Data, Error>;
 
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, _ctx: Context, msg: Message) {
-        bot_utils::score_insert(msg.author.id.0.to_string().as_str(), msg.author.name.as_str()).await;
+        bot_utils::score_insert(&msg.author.id.to_string(), &msg.author.name).await;
     }
 
     async fn reaction_add(&self, _ctx: Context, _add_reaction: Reaction) {
@@ -34,19 +36,19 @@ impl EventHandler for Handler {
         let message= get_message_from_id(_add_reaction.channel_id, _add_reaction.message_id).await.unwrap().author;
         let score = get_points_from_emoji(reaction);
 
-        if &_add_reaction.user_id.unwrap().0.to_string().as_str() == &message.id.0.to_string().as_str() {
+        if _add_reaction.user_id.unwrap().to_string() == message.id.to_string() {
             return;
         }
 
         if score == 2 {
-            bot_utils::plus_two(_add_reaction.user_id.unwrap().0.to_string().as_str(), &message.id.0.to_string().as_str(), false).await;
+            bot_utils::plus_two(&_add_reaction.user_id.unwrap().to_string(), &message.id.to_string(), false).await;
         }
 
         if score == -2 {
-            bot_utils::minus_two(_add_reaction.user_id.unwrap().0.to_string().as_str(), &message.id.0.to_string().as_str(), false).await;
+            bot_utils::minus_two(&_add_reaction.user_id.unwrap().to_string(), &message.id.to_string(), false).await;
         }
 
-        bot_utils::score_update(message.id.0.to_string().as_str(), score).await;
+        bot_utils::score_update(&message.id.to_string(), score).await;
 
     }
 
@@ -55,19 +57,19 @@ impl EventHandler for Handler {
         let message= get_message_from_id(_removed_reaction.channel_id, _removed_reaction.message_id).await.unwrap().author;
         let score = get_points_from_emoji(reaction);
 
-        if &_removed_reaction.user_id.unwrap().0.to_string().as_str() == &message.id.0.to_string().as_str() {
+        if _removed_reaction.user_id.unwrap().to_string() == message.id.to_string() {
             return;
         }
 
         if score == 2 {
-            bot_utils::plus_two(_removed_reaction.user_id.unwrap().0.to_string().as_str(), &message.id.0.to_string().as_str(), true).await;
+            bot_utils::plus_two(&_removed_reaction.user_id.unwrap().to_string(), &message.id.to_string(), true).await;
         }
 
         if score == -2 {
-            bot_utils::minus_two(_removed_reaction.user_id.unwrap().0.to_string().as_str(), &message.id.0.to_string().as_str(), true).await;
+            bot_utils::minus_two(&_removed_reaction.user_id.unwrap().to_string(), &message.id.to_string(), true).await;
         }
 
-        bot_utils::score_update(message.id.0.to_string().as_str(), score * -1).await;
+        bot_utils::score_update(&message.id.to_string(), score * -1).await;
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
@@ -92,7 +94,7 @@ fn get_points_from_emoji(reaction: ReactionType) -> i8 {
 }
 
 #[group]
-#[commands(smash, judge, score, top, leader, join, leave, play, stop, queue, skip, resume)]
+#[commands(smash, judge, score, top, leader)]
 struct General;
 
 #[group]
@@ -125,7 +127,7 @@ async fn main() {
             if let Some(team) = info.team {
                 owners.insert(team.owner_user_id);
             } else {
-                owners.insert(info.owner.id);
+                owners.insert(info.owner.unwrap().id);
             }
             match http.get_current_user().await {
                 Ok(bot_id) => (owners, bot_id.id),
@@ -135,29 +137,29 @@ async fn main() {
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
-    let framework = StandardFramework::new()
-        .configure(|c| c
-            .with_whitespace(true)
-            .on_mention(Some(bot_id))
-            .prefix("!")
-            .delimiters(vec![",",","])
-            .owners(owners))
-        .unrecognised_command(unknown_command)
-        .group(&GENERAL_GROUP)
-        .group(&OWNER_GROUP);
+    let framework = poise::Framework::<Data, Error>::builder()
+        .options(poise::FrameworkOptions {
+            commands: vec![ping()],
+            prefix_options: poise::PrefixFrameworkOptions {
+                prefix: Some("!".into()),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .setup(|ctx, _ready, framework|{
+            Box::pin(async move {
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                Ok(Data {})
+            })
+        })
+        .build();
 
-    let mut client =
-        Client::builder(&token, intents)
-            .framework(framework)
-            .event_handler(Handler)
-            .register_songbird()
-            .await
-            .expect("Err creating client");
+    let client = serenity_prelude::ClientBuilder::new(token, intents)
+        .framework(framework)
+        .await;
+    client.unwrap().start().await.unwrap();
 
 
-    if let Err(why) = client.start().await {
-        println!("Client error: {:?}", why);
-    }
 
 }
 async fn get_message_from_id(channel_id:ChannelId, message_id: MessageId) -> serenity::Result<Message> {
