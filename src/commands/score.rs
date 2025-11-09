@@ -1,9 +1,6 @@
-use serenity::framework::standard::CommandResult;
-use serenity::framework::standard::macros::command;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
-use std::fmt::{Display, Formatter, Result};
-use crate::bot_utils::connect_to_database;
+use std::fmt::{Display, Formatter, Result as fmtResult};
+use crate::bot_utils::{connect_to_database};
+use crate::bot_types::{ Error, _Context as Context};
 
 /**
 Returns the current users score.
@@ -15,27 +12,27 @@ struct UserInfo {
 }
 
 impl Display for UserInfo {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> fmtResult {
         write!(f, "{} has {} points", self.user_name, self.score)
     }
 }
 
-#[command]
-pub async fn score(ctx: &Context, msg: &Message) -> CommandResult {
+#[poise::command(prefix_command)]
+pub async fn score(ctx: Context<'_>) -> Result<(), Error> {
 
-    let clone_msg = msg;
+    let msg = ctx.channel_id().message(&ctx.http(), ctx.id()).await?;
 
     let search_user = if msg.referenced_message.is_none() {
-        clone_msg.author.id
+        msg.author.id
     } else {
-        clone_msg.referenced_message.clone().unwrap().author.id
+        msg.referenced_message.clone().unwrap().author.id
 
     };
 
 
     let return_user = get_score(search_user.to_string().as_str()).await;
 
-    if let Err(why) = msg.reply(&ctx.http, return_user.to_string()).await {
+    if let Err(why) = ctx.reply( return_user.to_string()).await {
         println!("Error sending message: {:?}", why);
     }
 

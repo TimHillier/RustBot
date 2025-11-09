@@ -1,16 +1,14 @@
-use rand::seq::SliceRandom;
 use crate::{bot_utils, emoji};
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::{CommandResult};
-use serenity::model::prelude::*;
-use serenity::prelude::*;
-use serenity::model::channel::ReactionType;
 use crate::bot_utils::{connect_to_database};
+use rand::seq::IndexedRandom;
+use crate::bot_types::{ Error, _Context as Context};
+use poise::{ serenity_prelude as serenity};
+use serenity::model::channel::ReactionType;
 
+#[poise::command(prefix_command)]
+pub async fn judge(ctx: Context<'_>) -> Result<(), Error> {
 
-#[command]
-pub async fn judge(ctx: &Context, msg:&Message) -> CommandResult {
-
+    let msg = ctx.channel_id().message(&ctx.http(), ctx.id()).await?;
     // Add Emojis to Judge Command.
     let mut emojis: Vec<ReactionType> = vec![];
     let current_env = bot_utils::get_env();
@@ -21,20 +19,20 @@ pub async fn judge(ctx: &Context, msg:&Message) -> CommandResult {
         emojis.push(emoji::get_emoji("manny"));
         emojis.push(emoji::get_emoji("doot"));
     }
-    let reaction = emojis.choose(&mut rand::thread_rng()).unwrap().clone();
+    let reaction = emojis.choose(&mut rand::rng()).unwrap().clone();
 
     if msg.referenced_message.is_none() {
-        if let Err(why) = msg.reply(&ctx.http, "Command can only be used as a reply.").await {
+        if let Err(why) = ctx.reply("Command can only be used as a reply.").await {
             println!("Error sending message: {:?}", why);
         }
         Ok(())
     } else if has_been_judged(&msg.referenced_message.clone().unwrap().id.to_string()).await {
-            if let Err(why) = msg.reply(&ctx.http, "Post has already been judged.").await {
+            if let Err(why) = ctx.reply("Post has already been judged.").await {
                 println!("Error sending message: {:?}", why);
             }
             Ok(())
         } else {
-        if let Err(why) = msg.referenced_message.clone().unwrap().react(&ctx.http, reaction.clone()).await {
+        if let Err(why) = msg.referenced_message.clone().unwrap().react(&ctx.http(), reaction.clone()).await {
             println!("Error sending message: {:?}", why);
         }
 

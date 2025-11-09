@@ -2,11 +2,8 @@
 Returns the Top 3 scores.
 **/
 
-use serenity::framework::standard::CommandResult;
-use serenity::framework::standard::macros::{command};
-use serenity::model::prelude::*;
-use serenity::prelude::*;
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{Display, Formatter, Result as fmtResult};
+use crate::bot_types::{ Error, _Context as Context};
 use crate::bot_utils::connect_to_database;
 
 #[derive(Debug)]
@@ -16,7 +13,7 @@ struct UserInfo {
 }
 
 impl Display for UserInfo {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> fmtResult {
         write!(f, " - {} > {}\n", self.user_name, self.score)
     }
 }
@@ -24,7 +21,7 @@ impl Display for UserInfo {
 #[derive(Debug)]
 struct UserInfoVec(Vec<UserInfo>);
 impl Display for UserInfoVec {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> fmtResult {
        let mut comma_seperated = String::new();
 
         for val in &self.0[0..self.0.len()-1] {
@@ -36,10 +33,9 @@ impl Display for UserInfoVec {
         write!(f, "{}", comma_seperated)
     }
 }
-#[command]
-pub async fn top(ctx: &Context, msg: &Message) -> CommandResult {
+#[poise::command(prefix_command)]
+pub async fn top(ctx: Context<'_>) -> Result<(), Error>{
     let top_scores = get_top_scores(1).await;
-
 
     let mut reply_string: String = String::new();
     for (i, value) in top_scores.0.iter().enumerate() {
@@ -47,14 +43,14 @@ pub async fn top(ctx: &Context, msg: &Message) -> CommandResult {
         reply_string.push_str(value.to_string().as_str());
     }
 
-    if let Err(why) = msg.reply(&ctx.http, reply_string).await {
+    if let Err(why) = ctx.reply( reply_string).await {
         println!("Error sending message: {:?}", why);
     }
     Ok(())
 }
 
-#[command]
-pub async fn leader(ctx: &Context, msg: &Message) -> CommandResult {
+#[poise::command(prefix_command)]
+pub async fn leader(ctx: Context<'_>) -> Result<(), Error>{
     let top_scores = get_top_scores(10).await;
 
 
@@ -64,7 +60,7 @@ pub async fn leader(ctx: &Context, msg: &Message) -> CommandResult {
         reply_string.push_str(value.to_string().as_str());
     }
 
-    if let Err(why) = msg.reply(&ctx.http, reply_string).await {
+    if let Err(why) = ctx.reply(reply_string).await {
         println!("Error sending message: {:?}", why);
     }
     Ok(())

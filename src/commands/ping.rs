@@ -1,25 +1,12 @@
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::{CommandResult};
-use serenity::model::prelude::*;
-use serenity::prelude::*;
-use serenity::model::channel::ReactionType;
-use serenity::model::id::EmojiId;
+use crate::bot_types::{ Error, _Context as Context };
+use poise::serenity_prelude as serenity;
 
-#[command]
-pub async fn ping(ctx: &Context, msg:&Message) -> CommandResult {
-    // if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
-    //     println!("Error sending message: {:?}", why);
-    // }
-
-    let doot_reaction = ReactionType::Custom {
-        animated: false,
-        id: EmojiId(929985012554682469),
-        name: Some("doot".to_string()),
-    };
-
-    // how to add reactions to message?
-    if let Err(why) = msg.react(&ctx.http, doot_reaction).await {
-            println!("Error sending message: {:?}", why);
-    }
+#[poise::command(prefix_command)]
+pub async fn ping(ctx: Context<'_>,
+                  #[description = "Selected User"] user: Option<serenity::User>,
+    )-> Result<(), Error> {
+    let u = user.as_ref().unwrap_or_else(|| ctx.author());
+    let response = format!("{}'s account was created at {}", u.name, u.created_at());
+    ctx.say(response).await?;
     Ok(())
 }
