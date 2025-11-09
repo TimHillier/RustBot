@@ -11,7 +11,6 @@ use crate::commands::ping::*;
 
 use std::collections::{HashSet};
 use serenity::http::*;
-use serenity::framework::StandardFramework;
 use serenity::prelude::*;
 use serenity::async_trait;
 use serenity::model::id::{ChannelId, GuildId, MessageId};
@@ -94,10 +93,6 @@ fn get_points_from_emoji(reaction: ReactionType) -> i8 {
 }
 
 #[group]
-#[commands(smash, judge, score, top, leader)]
-struct General;
-
-#[group]
 #[owners_only]
 #[only_in(guilds)]
 struct Owner;
@@ -139,7 +134,7 @@ async fn main() {
 
     let framework = poise::Framework::<Data, Error>::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping()],
+            commands: vec![ping(), judge(), score(), top(), leader(), smash()],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
                 ..Default::default()

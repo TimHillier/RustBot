@@ -9,8 +9,6 @@ serenity = { version = "0.12.4", default-features = false, features = ["client",
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 serde = {version = "1.0.188", features = ["derive"]}
 toml = "0.9.8"
-error = "0.1.9"
-context = "3.0.0"
 rand = "0.9.2"
 sqlx = { version = "0.8.6", features = [ "runtime-tokio-rustls", "tls-rustls", "sqlite"] }
 poise = "0.6.1"
