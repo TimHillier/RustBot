@@ -146,6 +146,7 @@ async fn main() {
 
     let client = serenity_prelude::ClientBuilder::new(token, intents)
         .framework(framework)
+        .event_handler(Handler)
         .await;
     client.unwrap().start().await.unwrap();
 
