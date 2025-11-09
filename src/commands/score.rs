@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result as fmtResult};
 use crate::bot_utils::{connect_to_database};
-use crate::{ Error, _Context as Context};
+use crate::bot_types::{ Error, _Context as Context};
 
 /**
 Returns the current users score.

@@ -1,7 +1,7 @@
 use crate::{bot_utils, emoji};
 use crate::bot_utils::{connect_to_database};
 use rand::seq::IndexedRandom;
-use crate::{ Error, _Context as Context};
+use crate::bot_types::{ Error, _Context as Context};
 use poise::{ serenity_prelude as serenity};
 use serenity::model::channel::ReactionType;
 

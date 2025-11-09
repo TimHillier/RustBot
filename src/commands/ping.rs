@@ -1,4 +1,4 @@
-use crate::{Data, Error, _Context as Context};
+use crate::bot_types::{ Error, _Context as Context };
 use poise::serenity_prelude as serenity;
 
 #[poise::command(prefix_command)]

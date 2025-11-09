@@ -1,6 +1,7 @@
 mod commands;
 mod bot_utils;
 mod emoji;
+mod bot_types;
 
 // Commands;
 use crate::commands::smash::*;
@@ -9,6 +10,8 @@ use crate::commands::score::*;
 use crate::commands::top::*;
 use crate::commands::ping::*;
 
+use crate::bot_types::{Data, Error};
+
 use std::collections::{HashSet};
 use serenity::http::*;
 use serenity::prelude::*;
@@ -16,16 +19,17 @@ use serenity::async_trait;
 use serenity::model::id::{ChannelId, GuildId, MessageId};
 use serenity::model::channel::{Message, Reaction, ReactionType};
 use serenity::model::gateway::Ready;
-use serenity::framework::standard::macros::{group, hook};
+use serenity::framework::standard::macros::hook;
 use poise::serenity_prelude as serenity_prelude;
 
 struct Handler;
-struct Data{}
-type Error = Box<dyn std::error::Error + Send + Sync>;
-type _Context<'a> = poise::Context<'a, Data, Error>;
 
 #[async_trait]
 impl EventHandler for Handler {
+    async fn cache_ready(&self, _ctx: Context, _guilds: Vec<GuildId>) {
+        println!("Cache Ready - Environment: {}", bot_utils::get_env());
+    }
+
     async fn message(&self, _ctx: Context, msg: Message) {
         bot_utils::score_insert(&msg.author.id.to_string(), &msg.author.name).await;
     }
@@ -75,10 +79,6 @@ impl EventHandler for Handler {
         println!("{} is connected! Environment: {}", ready.user.name, bot_utils::get_env());
     }
 
-    async fn cache_ready(&self, _ctx: Context, _guilds: Vec<GuildId>) {
-        println!("Cache Ready - Environment: {}", bot_utils::get_env());
-    }
-
 }
 
 fn get_points_from_emoji(reaction: ReactionType) -> i8 {
@@ -91,11 +91,6 @@ fn get_points_from_emoji(reaction: ReactionType) -> i8 {
     }
     return score;
 }
-
-#[group]
-#[owners_only]
-#[only_in(guilds)]
-struct Owner;
 
 #[hook]
 async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &str) {

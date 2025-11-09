@@ -3,7 +3,7 @@ Returns the Top 3 scores.
 **/
 
 use std::fmt::{Display, Formatter, Result as fmtResult};
-use crate::{ Error, _Context as Context};
+use crate::bot_types::{ Error, _Context as Context};
 use crate::bot_utils::connect_to_database;
 
 #[derive(Debug)]

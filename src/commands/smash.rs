@@ -3,8 +3,8 @@ Returns smash or pass.
  - Requires image?
  - Should return in reply.
  **/
-use serenity::prelude::*;
-use crate::{bot_utils, Error, _Context as Context};
+use crate::bot_utils;
+use crate::bot_types::{Error, _Context as Context};
 
 #[poise::command(prefix_command)]
 pub async fn smash(ctx: Context<'_>) -> Result<(), Error>{
