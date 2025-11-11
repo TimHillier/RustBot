@@ -132,7 +132,7 @@ async fn main() {
 
     let framework = poise::Framework::<Data, Error>::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), judge(), score(), top(), leader(), smash(), trade()],
+            commands: vec![ping(), judge(), score(), top(), leader(), smash(), trade(), wallet()],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
                 ..Default::default()

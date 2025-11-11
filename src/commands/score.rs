@@ -4,7 +4,7 @@ Commands for displaying scores.
 
 use std::fmt::{Display, Formatter, Result as fmtResult};
 use crate::bot_types::{ Error, _Context as Context };
-use crate::bot_utils::{get_user_info_score, get_top_scores};
+use crate::bot_utils::{get_user_info_score, get_top_scores, get_plus_two_received};
 
 /**
 Struct used for displaying Information
@@ -34,6 +34,7 @@ impl Display for UserInfoVec {
         write!(f, "{}", comma_seperated)
     }
 }
+
 /**
 Returns the Top Scoring User.
 **/
@@ -94,6 +95,18 @@ pub async fn score(ctx: Context<'_>) -> Result<(), Error> {
     if let Err(why) = ctx.reply( return_user.to_string()).await {
         println!("Error sending message: {:?}", why);
     }
+
+    Ok(())
+}
+
+/**
+Returns the users +2 count
+**/
+#[poise::command(prefix_command, aliases("balance", "bank"))]
+pub async fn wallet(ctx: Context<'_>) -> Result<(), Error>{
+    let number_of_plus_twos = get_plus_two_received(ctx.author().id.to_string()).await.unwrap();
+
+    ctx.reply(format!("Current Balance: {}", number_of_plus_twos)).await.expect("Error: Getting current Balance.");
 
     Ok(())
 }
