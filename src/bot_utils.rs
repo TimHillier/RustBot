@@ -1,3 +1,4 @@
+use crate::UserInfo;
 use std::fs;
 use rand::Rng;
 use serde::Deserialize;
@@ -61,7 +62,7 @@ pub async fn connect_to_database() -> Pool<Sqlite> {
     return database;
 }
 
-pub async fn score_update(user_id: &str, points:i8) {
+pub async fn score_update(user_id: &str, points:i16) {
     let database = connect_to_database().await;
 
     sqlx::query!(
@@ -141,8 +142,154 @@ pub async fn minus_two(giver_id: &str, received_id: &str, removed: bool) {
     received_minus_two(received_id, removed).await;
 }
 
+/**
+Directly give the user_id plus 2's
+**/
+pub async fn give_plus_two(user_id: &str, amount_given: i16) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "UPDATE user SET plus_two_received = plus_two_received + ? WHERE user_id = ?",
+        amount_given,
+        user_id
+    )
+        .execute(&database)
+        .await.expect("Couldn't give plus two");
 
-pub async fn score_insert(user_id: &str, user_name:&str) {
+}
+
+/**
+Get the current amount of plus 2's the user has.
+**/
+pub async fn get_plus_two_received(user_id: String) -> Option<i64> {
+    let database = connect_to_database().await;
+    let plus_2_amount = sqlx::query!(
+        "SELECT plus_two_received FROM user WHERE user_id = ?",
+        user_id
+    )
+        .fetch_one(&database)
+        .await.unwrap();
+
+    return plus_2_amount.plus_two_received;
+}
+
+
+/**
+Directly take the user_id plus 2's
+**/
+pub async fn take_plus_two(user_id: &str, amount_taken: i16) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "UPDATE user SET plus_two_received = plus_two_received - ? WHERE user_id = ?",
+        amount_taken,
+        user_id
+    )
+        .execute(&database)
+        .await.expect("Couldn't take plus two");
+
+}
+
+/**
+Directly give the user_id plus 2's
+**/
+pub async fn give_minus_two(user_id: &str, amount_given: i16) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "UPDATE user SET minus_two_received = minus_two_received + ? WHERE user_id = ?",
+        amount_given,
+        user_id
+    )
+        .execute(&database)
+        .await.expect("Couldn't give minus two");
+
+}
+
+/**
+Get the current amount of minus 2's the user has.
+**/
+pub async fn get_minus_two_received(user_id: &str) {
+    let database = connect_to_database().await;
+    let plus_2_amount = sqlx::query!(
+        "SELECT minus_two_received FROM user WHERE user_id = ?",
+        user_id
+    )
+        .fetch_all(&database)
+        .await.unwrap();
+}
+
+/**
+Directly take the user_id plus 2's
+**/
+pub async fn take_minus_two(user_id: &str, amount_taken: i16) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "UPDATE user SET minus_two_received = minus_two_received - ? WHERE user_id = ?",
+        amount_taken,
+        user_id
+    )
+        .execute(&database)
+        .await.expect("Couldn't take minus two");
+
+}
+
+/**
+Get the users score formated for userInfo.
+**/
+pub async fn get_user_info_score(user: &str) -> UserInfo {
+    let database = connect_to_database().await;
+    let user = sqlx::query!(
+        "SELECT user_name, score FROM user WHERE user_id = ?",
+        user,
+    )
+        .fetch_one(&database)
+        .await
+        .unwrap();
+
+    return UserInfo {user_name: user.user_name, score: user.score.unwrap()};
+}
+
+/**
+Get the users score formated for userInfo.
+**/
+pub async fn get_score(user: &str) -> i64 {
+    let database = connect_to_database().await;
+    let result = sqlx::query!(
+        "SELECT score FROM user WHERE user_id = ?",
+        user,
+    )
+        .fetch_one(&database)
+        .await
+        .unwrap();
+
+    return result.score.unwrap();
+}
+
+/**
+Returns users : scores with the top N results.
+**/
+pub(crate) async fn get_top_scores(limit: i8) -> crate::commands::score::UserInfoVec {
+    let database = connect_to_database().await;
+    let top = sqlx::query!(
+            "SELECT user_name, score FROM user ORDER BY score DESC LIMIT ?",
+        limit
+    )
+        .fetch_all(&database)
+        .await
+        .unwrap();
+
+
+    let mut user_vector = crate::commands::score::UserInfoVec(vec![]);
+    for value in top.iter() {
+        let temp_user = UserInfo {user_name: value.user_name.to_string(), score: value.score.unwrap()};
+        user_vector.0.push(temp_user)
+    }
+
+    return user_vector;
+}
+
+/**
+This creates a new user in the db if they already don't exist.
+**/
+pub async fn create_in_db(user_id: &str, user_name:&str) {
     let database = connect_to_database().await;
     sqlx::query!(
             "INSERT OR IGNORE INTO user (user_id, user_name, score, plus_two_given, plus_two_received, minus_two_given, minus_two_received) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -154,6 +301,23 @@ pub async fn score_insert(user_id: &str, user_name:&str) {
             0,
             0,
         )
+        .execute(&database)
+        .await
+        .unwrap();
+}
+
+/**
+Add log to the trade logtable.
+**/
+pub async fn add_trade_log(message_id:String, from_user:&str, receiving_user:String, amount:String) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "INSERT INTO tradeLogs (message_id, from_user, receiving_user, amount ) VALUES (?, ?, ?, ?)",
+        message_id,
+        from_user,
+        receiving_user,
+        amount,
+    )
         .execute(&database)
         .await
         .unwrap();
