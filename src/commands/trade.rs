@@ -55,7 +55,7 @@ pub async fn trade(
     .await;
     bot_utils::add_trade_log(message_id, from_user, receiving_user.clone(), amount.clone()).await;
     ctx.reply(format!(
-        "{} has traded {} {} {}. They're updated scores are {}: {} and {}: {}",
+        "{} has traded {} {} {}. The updated scores are {}: {} and {}: {}",
         from_user.clone(),
         receiving_user.clone(),
         amount.clone(),
