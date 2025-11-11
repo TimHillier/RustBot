@@ -7,8 +7,8 @@ mod bot_types;
 use crate::commands::smash::*;
 use crate::commands::judge::*;
 use crate::commands::score::*;
-use crate::commands::top::*;
 use crate::commands::ping::*;
+use crate::commands::trade::*;
 
 use crate::bot_types::{Data, Error};
 
@@ -30,8 +30,11 @@ impl EventHandler for Handler {
         println!("Cache Ready - Environment: {}", bot_utils::get_env());
     }
 
+    /**
+    Add new users to the database.
+    */
     async fn message(&self, _ctx: Context, msg: Message) {
-        bot_utils::score_insert(&msg.author.id.to_string(), &msg.author.name).await;
+        bot_utils::create_in_db(&msg.author.id.to_string(), &msg.author.name).await;
     }
 
     async fn reaction_add(&self, _ctx: Context, _add_reaction: Reaction) {
@@ -81,8 +84,8 @@ impl EventHandler for Handler {
 
 }
 
-fn get_points_from_emoji(reaction: ReactionType) -> i8 {
-    let mut score:i8 = 0;
+fn get_points_from_emoji(reaction: ReactionType) -> i16 {
+    let mut score:i16 = 0;
     if reaction == emoji::get_emoji("plus_two") || reaction == emoji::get_emoji("manny") {
         score = 2;
     }
@@ -129,7 +132,7 @@ async fn main() {
 
     let framework = poise::Framework::<Data, Error>::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), judge(), score(), top(), leader(), smash()],
+            commands: vec![ping(), judge(), score(), top(), leader(), smash(), trade()],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
                 ..Default::default()

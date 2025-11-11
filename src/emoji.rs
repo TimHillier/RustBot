@@ -1,6 +1,7 @@
 use std::string::ToString;
 use serenity::model::channel::ReactionType;
 use serenity::model::id::EmojiId;
+use crate::bot_utils;
 
 fn get_plus_two() -> ReactionType {
     let plus_two: ReactionType = ReactionType::Custom {
@@ -40,11 +41,18 @@ fn get_doot() -> ReactionType {
 
 
 pub fn get_emoji(emoji_name: &str) -> ReactionType {
-    match emoji_name {
-        "manny" => get_manny(),
-        "doot" => get_doot(),
-        "minus_two" => get_minus_two(),
-        "plus_two" => get_plus_two(),
-         _ => get_manny(),
+    let current_env = bot_utils::get_env();
+    if String::from("live").eq(&current_env) {
+        match emoji_name {
+            "minus_two" => get_minus_two(),
+            "plus_two" => get_plus_two(),
+            _ => get_plus_two(),
+        }
+    } else {
+        match emoji_name {
+            "minus_two" => get_doot(),
+            "plus_two" => get_manny(),
+            _ => get_manny(),
+        }
     }
 }
