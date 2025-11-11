@@ -1,24 +1,22 @@
 use crate::UserInfo;
-use std::fs;
 use rand::Rng;
 use serde::Deserialize;
+use serenity::{Result as SerenityResult, model::channel::Message};
 use sqlx::{Pool, Sqlite};
+use std::fs;
 use toml;
-use serenity::{
-    model::{channel::Message},
-    Result as SerenityResult,
-};
+use crate::commands::shop::ItemInfo;
 
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
     #[allow(dead_code)]
     discord_token: String,
-    environment: String
+    environment: String,
 }
 
 pub fn get_toml() -> String {
-   let toml_str = fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML");
-   return toml_str;
+    let toml_str = fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML");
+    return toml_str;
 }
 pub fn get_secret() -> String {
     let toml_str = get_toml();
@@ -31,7 +29,7 @@ pub fn get_env() -> String {
     let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
     let environment = secrets_toml.environment;
     if environment.is_empty() {
-       return String::from("testing");
+        return String::from("testing");
     }
     return environment;
 }
@@ -62,7 +60,7 @@ pub async fn connect_to_database() -> Pool<Sqlite> {
     return database;
 }
 
-pub async fn score_update(user_id: &str, points:i16) {
+pub async fn score_update(user_id: &str, points: i16) {
     let database = connect_to_database().await;
 
     sqlx::query!(
@@ -70,11 +68,12 @@ pub async fn score_update(user_id: &str, points:i16) {
         points,
         user_id
     )
-        .execute(&database)
-        .await.expect("Couldn't increase users score.");
+    .execute(&database)
+    .await
+    .expect("Couldn't increase users score.");
 }
 
-pub async fn gave_plus_two(user_id: &str, removed:bool) {
+pub async fn gave_plus_two(user_id: &str, removed: bool) {
     let mut increase = 1;
     if removed {
         increase = -1;
@@ -85,10 +84,11 @@ pub async fn gave_plus_two(user_id: &str, removed:bool) {
         increase,
         user_id
     )
-        .execute(&database)
-        .await.expect("Couldn't give plus two");
+    .execute(&database)
+    .await
+    .expect("Couldn't give plus two");
 }
-pub async fn gave_minus_two(user_id: &str, removed:bool) {
+pub async fn gave_minus_two(user_id: &str, removed: bool) {
     let mut increase = 1;
     if removed {
         increase = -1;
@@ -99,10 +99,11 @@ pub async fn gave_minus_two(user_id: &str, removed:bool) {
         increase,
         user_id
     )
-        .execute(&database)
-        .await.expect("Couldn't give minus two");
+    .execute(&database)
+    .await
+    .expect("Couldn't give minus two");
 }
-pub async fn received_plus_two(user_id: &str, removed:bool) {
+pub async fn received_plus_two(user_id: &str, removed: bool) {
     let mut increase = 1;
     if removed {
         increase = -1;
@@ -113,10 +114,11 @@ pub async fn received_plus_two(user_id: &str, removed:bool) {
         increase,
         user_id
     )
-        .execute(&database)
-        .await.unwrap();
+    .execute(&database)
+    .await
+    .unwrap();
 }
-pub async fn received_minus_two(user_id: &str, removed:bool) {
+pub async fn received_minus_two(user_id: &str, removed: bool) {
     let mut increase = 1;
     if removed {
         increase = -1;
@@ -127,14 +129,14 @@ pub async fn received_minus_two(user_id: &str, removed:bool) {
         increase,
         user_id
     )
-        .execute(&database)
-        .await.unwrap();
+    .execute(&database)
+    .await
+    .unwrap();
 }
 
 pub async fn plus_two(giver_id: &str, received_id: &str, removed: bool) {
     gave_plus_two(giver_id, removed).await;
     received_plus_two(received_id, removed).await;
-
 }
 
 pub async fn minus_two(giver_id: &str, received_id: &str, removed: bool) {
@@ -152,9 +154,9 @@ pub async fn give_plus_two(user_id: &str, amount_given: i16) {
         amount_given,
         user_id
     )
-        .execute(&database)
-        .await.expect("Couldn't give plus two");
-
+    .execute(&database)
+    .await
+    .expect("Couldn't give plus two");
 }
 
 /**
@@ -166,12 +168,12 @@ pub async fn get_plus_two_received(user_id: String) -> Option<i64> {
         "SELECT plus_two_received FROM user WHERE user_id = ?",
         user_id
     )
-        .fetch_one(&database)
-        .await.unwrap();
+    .fetch_one(&database)
+    .await
+    .unwrap();
 
     return plus_2_amount.plus_two_received;
 }
-
 
 /**
 Directly take the user_id plus 2's
@@ -183,9 +185,9 @@ pub async fn take_plus_two(user_id: &str, amount_taken: i16) {
         amount_taken,
         user_id
     )
-        .execute(&database)
-        .await.expect("Couldn't take plus two");
-
+    .execute(&database)
+    .await
+    .expect("Couldn't take plus two");
 }
 
 /**
@@ -198,9 +200,9 @@ pub async fn give_minus_two(user_id: &str, amount_given: i16) {
         amount_given,
         user_id
     )
-        .execute(&database)
-        .await.expect("Couldn't give minus two");
-
+    .execute(&database)
+    .await
+    .expect("Couldn't give minus two");
 }
 
 /**
@@ -212,8 +214,9 @@ pub async fn get_minus_two_received(user_id: &str) {
         "SELECT minus_two_received FROM user WHERE user_id = ?",
         user_id
     )
-        .fetch_all(&database)
-        .await.unwrap();
+    .fetch_all(&database)
+    .await
+    .unwrap();
 }
 
 /**
@@ -226,9 +229,9 @@ pub async fn take_minus_two(user_id: &str, amount_taken: i16) {
         amount_taken,
         user_id
     )
-        .execute(&database)
-        .await.expect("Couldn't take minus two");
-
+    .execute(&database)
+    .await
+    .expect("Couldn't take minus two");
 }
 
 /**
@@ -236,15 +239,15 @@ Get the users score formated for userInfo.
 **/
 pub async fn get_user_info_score(user: &str) -> UserInfo {
     let database = connect_to_database().await;
-    let user = sqlx::query!(
-        "SELECT user_name, score FROM user WHERE user_id = ?",
-        user,
-    )
+    let user = sqlx::query!("SELECT user_name, score FROM user WHERE user_id = ?", user,)
         .fetch_one(&database)
         .await
         .unwrap();
 
-    return UserInfo {user_name: user.user_name, score: user.score.unwrap()};
+    return UserInfo {
+        user_name: user.user_name,
+        score: user.score.unwrap(),
+    };
 }
 
 /**
@@ -252,10 +255,7 @@ Get the users score formated for userInfo.
 **/
 pub async fn get_score(user: &str) -> i64 {
     let database = connect_to_database().await;
-    let result = sqlx::query!(
-        "SELECT score FROM user WHERE user_id = ?",
-        user,
-    )
+    let result = sqlx::query!("SELECT score FROM user WHERE user_id = ?", user,)
         .fetch_one(&database)
         .await
         .unwrap();
@@ -269,17 +269,19 @@ Returns users : scores with the top N results.
 pub(crate) async fn get_top_scores(limit: i8) -> crate::commands::score::UserInfoVec {
     let database = connect_to_database().await;
     let top = sqlx::query!(
-            "SELECT user_name, score FROM user ORDER BY score DESC LIMIT ?",
+        "SELECT user_name, score FROM user ORDER BY score DESC LIMIT ?",
         limit
     )
-        .fetch_all(&database)
-        .await
-        .unwrap();
-
+    .fetch_all(&database)
+    .await
+    .unwrap();
 
     let mut user_vector = crate::commands::score::UserInfoVec(vec![]);
     for value in top.iter() {
-        let temp_user = UserInfo {user_name: value.user_name.to_string(), score: value.score.unwrap()};
+        let temp_user = UserInfo {
+            user_name: value.user_name.to_string(),
+            score: value.score.unwrap(),
+        };
         user_vector.0.push(temp_user)
     }
 
@@ -289,7 +291,7 @@ pub(crate) async fn get_top_scores(limit: i8) -> crate::commands::score::UserInf
 /**
 This creates a new user in the db if they already don't exist.
 **/
-pub async fn create_in_db(user_id: &str, user_name:&str) {
+pub async fn create_in_db(user_id: &str, user_name: &str) {
     let database = connect_to_database().await;
     sqlx::query!(
             "INSERT OR IGNORE INTO user (user_id, user_name, score, plus_two_given, plus_two_received, minus_two_given, minus_two_received) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -309,7 +311,12 @@ pub async fn create_in_db(user_id: &str, user_name:&str) {
 /**
 Add log to the trade logtable.
 **/
-pub async fn add_trade_log(message_id:String, from_user:&str, receiving_user:String, amount:String) {
+pub async fn add_trade_log(
+    message_id: String,
+    from_user: &str,
+    receiving_user: String,
+    amount: String,
+) {
     let database = connect_to_database().await;
     sqlx::query!(
         "INSERT INTO tradeLogs (message_id, from_user, receiving_user, amount ) VALUES (?, ?, ?, ?)",
@@ -323,10 +330,28 @@ pub async fn add_trade_log(message_id:String, from_user:&str, receiving_user:Str
         .unwrap();
 }
 
-/// Checks that a message got sent correctly.
-pub fn check_msg(result: SerenityResult<Message>) {
-    if let Err(why) = result {
-        println!("Error sending message: {:?}", why);
-    }
-}
+/**
+Get Items from the shop table.
+**/
+pub async fn get_shop_items() -> crate::commands::shop::ItemInfoVec {
+    let database = connect_to_database().await;
+    let shop_items = sqlx::query!(
+        "SELECT item_name, price, amount, short_name, description FROM shop_items ORDER BY price DESC",
+    )
+    .fetch_all(&database)
+    .await
+    .unwrap();
 
+    let mut item_vector = crate::commands::shop::ItemInfoVec(vec![]);
+    for item in shop_items.iter() {
+        let temp_item = ItemInfo {
+            item_name: item.item_name.to_string(),
+            short_name: item.short_name.to_string(),
+            amount: item.amount.to_string(),
+            price: item.price.to_string(),
+            description: item.description.to_string(),
+        };
+        item_vector.0.push(temp_item)
+    }
+    return item_vector;
+}
