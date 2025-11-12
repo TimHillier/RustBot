@@ -1,17 +1,18 @@
 use crate::UserInfo;
+use crate::commands::shop::ItemInfo;
 use rand::Rng;
 use serde::Deserialize;
-use serenity::{Result as SerenityResult, model::channel::Message};
 use sqlx::{Pool, Sqlite};
 use std::fs;
 use toml;
-use crate::commands::shop::ItemInfo;
 
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
     #[allow(dead_code)]
     discord_token: String,
     environment: String,
+    live_bot_user_id: String,
+    testing_bot_user_id: String,
 }
 
 pub fn get_toml() -> String {
@@ -34,9 +35,18 @@ pub fn get_env() -> String {
     return environment;
 }
 
+pub fn is_bot(id: String) -> bool {
+    let toml_str = get_toml();
+    let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
+    if (id != secrets_toml.testing_bot_user_id) && (id != secrets_toml.live_bot_user_id) {
+        return false;
+    }
+    true
+}
+
 pub fn get_random_bool(prob: f64) -> bool {
-    let mut rng = rand::thread_rng();
-    return rng.gen_bool(prob);
+    let mut rng = rand::rng();
+    return rng.random_bool(prob);
 }
 
 #[allow(dead_code)]
@@ -172,7 +182,7 @@ pub async fn get_plus_two_received(user_id: String) -> Option<i64> {
     .await
     .unwrap();
 
-    return plus_2_amount.plus_two_received;
+    plus_2_amount.plus_two_received
 }
 
 /**
@@ -336,7 +346,7 @@ Get Items from the shop table.
 pub async fn get_shop_items() -> crate::commands::shop::ItemInfoVec {
     let database = connect_to_database().await;
     let shop_items = sqlx::query!(
-        "SELECT item_name, price, amount, short_name, description FROM shop_items ORDER BY price DESC",
+        "SELECT item_name, price, short_name, description FROM shop_items ORDER BY price DESC",
     )
     .fetch_all(&database)
     .await
@@ -347,7 +357,6 @@ pub async fn get_shop_items() -> crate::commands::shop::ItemInfoVec {
         let temp_item = ItemInfo {
             item_name: item.item_name.to_string(),
             short_name: item.short_name.to_string(),
-            amount: item.amount.to_string(),
             price: item.price.to_string(),
             description: item.description.to_string(),
         };
@@ -355,3 +364,21 @@ pub async fn get_shop_items() -> crate::commands::shop::ItemInfoVec {
     }
     return item_vector;
 }
+
+/**
+Returns the current number of active Bombs.
+**/
+pub async fn get_count(item: &str) -> i64 {
+    let database = connect_to_database().await;
+    let number_of_mines = sqlx::query!(
+        "SELECT current_amount FROM shop_items WHERE short_name = ?", item
+        ).fetch_one(&database)
+        .await
+        .unwrap();
+
+    number_of_mines.current_amount
+
+
+}
+
+

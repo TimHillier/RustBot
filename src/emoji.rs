@@ -39,6 +39,15 @@ fn get_doot() -> ReactionType {
     return doot;
 }
 
+fn get_winner() -> ReactionType {
+    let winner: ReactionType = ReactionType::Custom {
+        animated: false,
+        id: EmojiId::new(1348181039779938366),
+        name: Some("winner".to_string())
+    } ;
+    winner
+}
+
 
 pub fn get_emoji(emoji_name: &str) -> ReactionType {
     let current_env = bot_utils::get_env();
@@ -46,12 +55,14 @@ pub fn get_emoji(emoji_name: &str) -> ReactionType {
         match emoji_name {
             "minus_two" => get_minus_two(),
             "plus_two" => get_plus_two(),
+            "winner" => get_winner(),
             _ => get_plus_two(),
         }
     } else {
         match emoji_name {
             "minus_two" => get_doot(),
             "plus_two" => get_manny(),
+            "winner" => get_doot(),
             _ => get_manny(),
         }
     }
