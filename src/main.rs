@@ -24,7 +24,7 @@ use poise::serenity_prelude as serenity_prelude;
 use rand::Rng;
 use serenity::all::Member;
 use serenity::model::Timestamp;
-use crate::bot_utils::{get_count, is_bot};
+use crate::bot_utils::{get_count, is_bot, reset_count};
 use crate::emoji::get_emoji;
 
 struct Handler;
@@ -51,6 +51,7 @@ impl EventHandler for Handler {
             let mut member = get_member(_ctx.clone(), msg.clone()).await;
             let time_out_time = get_time_out_time();
             member.disable_communication_until_datetime(&_ctx.http.clone(), time_out_time).await.unwrap();
+            reset_count("mine").await;
             msg.reply(&_ctx.http, format!("{} You're our lucky loser! See you in 10 minutes. :3", get_emoji("winner"))).await.unwrap();
         }
     }

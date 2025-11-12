@@ -2,8 +2,9 @@ use crate::bot_types::{_Context as Context, Error};
 use crate::bot_utils;
 use poise::serenity_prelude as serenity;
 use std::fmt::{Display, Formatter, Result as fmtResult};
-use crate::bot_utils::{connect_to_database, take_plus_two};
+use crate::bot_utils::{connect_to_database, get_current_bot_id, get_plus_two_received, take_plus_two};
 use crate::commands::trade::do_transaction;
+use crate::emoji::get_emoji;
 
 static ITEM_COL_WIDTH: usize = 70;
 static PRICE_COL_WIDTH: usize = 15;
@@ -94,8 +95,13 @@ pub async fn buy(
     ).fetch_one(&database)
     .await?;
 
-    // TODO: I need to compare +2 to make sure they have enough/
-    do_transaction(&ctx.author().id.to_string(),"1044426183393157180" , selected_item.price as i16).await;
+    if get_plus_two_received(ctx.author().id.to_string()).await.unwrap() < selected_item.price {
+        ctx.reply(format!("Not Enough {}", get_emoji("plus_two"))).await?;
+        return Ok(());
+    }
+
+    let current_bot_id = get_current_bot_id().await.to_string();
+    do_transaction(&ctx.author().id.to_string(), &current_bot_id , selected_item.price as i16).await;
     update_shop_count(selected_item.short_name, 1, 1).await;
     ctx.reply("Bought").await?;
 

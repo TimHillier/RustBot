@@ -377,8 +377,26 @@ pub async fn get_count(item: &str) -> i64 {
         .unwrap();
 
     number_of_mines.current_amount
-
-
 }
 
+/**
+Resets the current number of active Bombs back to 1.
+**/
+pub async fn reset_count(item: &str) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "UPDATE shop_items SET current_amount = 1 WHERE short_name = ?", item
+        ).execute(&database)
+        .await
+        .unwrap();
+}
 
+pub async fn get_current_bot_id() -> String {
+    let toml_str = get_toml();
+    let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
+    if get_env() == "live" {
+        return secrets_toml.live_bot_user_id;
+    }
+    secrets_toml.testing_bot_user_id
+
+}
