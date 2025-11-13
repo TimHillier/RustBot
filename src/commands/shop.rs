@@ -103,7 +103,7 @@ pub async fn buy(
     let current_bot_id = get_current_bot_id().await.to_string();
     do_transaction(&ctx.author().id.to_string(), &current_bot_id , selected_item.price as i16).await;
     update_shop_count(selected_item.short_name, 1, 1).await;
-    ctx.reply("Bought").await?;
+    ctx.reply(format!("Bought {}", selected_item.item_name)).await?;
 
     Ok(())
 }
