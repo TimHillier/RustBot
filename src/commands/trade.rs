@@ -68,7 +68,7 @@ pub async fn trade(
     Ok(())
 }
 
-async fn do_transaction(giver_id: &str, receiver_id: &str, amount: i16) {
+pub async fn do_transaction(giver_id: &str, receiver_id: &str, amount: i16) {
     bot_utils::take_plus_two(giver_id, amount).await;
     bot_utils::give_plus_two(receiver_id, amount).await;
     bot_utils::score_update(giver_id, amount * -2).await;

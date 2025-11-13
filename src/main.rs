@@ -2,13 +2,13 @@ mod commands;
 mod bot_utils;
 mod emoji;
 mod bot_types;
-
 // Commands;
 use crate::commands::smash::*;
 use crate::commands::judge::*;
 use crate::commands::score::*;
 use crate::commands::ping::*;
 use crate::commands::trade::*;
+use crate::commands::shop::*;
 
 use crate::bot_types::{Data, Error};
 
@@ -21,6 +21,11 @@ use serenity::model::channel::{Message, Reaction, ReactionType};
 use serenity::model::gateway::Ready;
 use serenity::framework::standard::macros::hook;
 use poise::serenity_prelude as serenity_prelude;
+use rand::Rng;
+use serenity::all::Member;
+use serenity::model::Timestamp;
+use crate::bot_utils::{get_count, is_bot, reset_count};
+use crate::emoji::get_emoji;
 
 struct Handler;
 
@@ -35,6 +40,20 @@ impl EventHandler for Handler {
     */
     async fn message(&self, _ctx: Context, msg: Message) {
         bot_utils::create_in_db(&msg.author.id.to_string(), &msg.author.name).await;
+
+        if is_bot(msg.author.id.to_string()) {
+            return;
+        }
+
+        let mut _rng = rand::rng().random_range(0..100);
+        let current_number_of_bombs = get_count("mine").await;
+        if _rng <= current_number_of_bombs {
+            let mut member = get_member(_ctx.clone(), msg.clone()).await;
+            let time_out_time = get_time_out_time();
+            member.disable_communication_until_datetime(&_ctx.http.clone(), time_out_time).await.unwrap();
+            reset_count("mine").await;
+            msg.reply(&_ctx.http, format!("{} You're our lucky loser! See you in 10 minutes. :3", get_emoji("winner"))).await.unwrap();
+        }
     }
 
     async fn reaction_add(&self, _ctx: Context, _add_reaction: Reaction) {
@@ -82,6 +101,25 @@ impl EventHandler for Handler {
         println!("{} is connected! Environment: {}", ready.user.name, bot_utils::get_env());
     }
 
+}
+
+
+/**
+Returns a time 10 minutes from now.
+**/
+fn get_time_out_time() -> Timestamp {
+    let current_time: i64 = Timestamp::now().unix_timestamp();
+    let time_out = 600;
+    Timestamp::from_unix_timestamp(current_time + time_out as i64).unwrap()
+}
+
+/**
+Returns the Member of the message sent.
+**/
+async fn get_member(_ctx: Context, msg: Message) -> Member {
+    let guild_id = msg.guild_id.unwrap();
+    let member = guild_id.member(&_ctx.http, msg.author.id).await.unwrap();
+    member
 }
 
 fn get_points_from_emoji(reaction: ReactionType) -> i16 {
@@ -132,7 +170,7 @@ async fn main() {
 
     let framework = poise::Framework::<Data, Error>::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), judge(), score(), top(), leader(), smash(), trade()],
+            commands: vec![ping(), judge(), score(), top(), leader(), smash(), trade(), wallet(), shop(), item_count()],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
                 ..Default::default()
