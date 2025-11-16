@@ -1,0 +1,16 @@
+name: Build Docker and Deploy
+
+on:
+  [workflow_dispatch]
+
+jobs:
+  build_publish:
+    runs-on: ubuntu-latest
+    steps:
+      
+- name: checkout
+  uses: actions/checkout@v4
+- name: build image
+  run: docker build . -t ghcr.io/timhillier/rustbot:latest
+- name: push image
+  run: docker push ghcr.io/timhillier/rustbot:latest
