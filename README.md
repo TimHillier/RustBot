@@ -1,3 +1,5 @@
+[![Build Docker and Deploy](https://github.com/TimHillier/RustBot/actions/workflows/docker-build-push.yml/badge.svg)](https://github.com/TimHillier/RustBot/actions/workflows/docker-build-push.yml)
+
 # Rust Bot
 Discord bot build in Rust using [Serenity]()
 
