@@ -7,10 +7,18 @@ jobs:
   build_publish:
     runs-on: ubuntu-latest
     steps:
-      
-- name: checkout
-  uses: actions/checkout@v4
-- name: build image
-  run: docker build . -t ghcr.io/timhillier/rustbot:latest
-- name: push image
-  run: docker push ghcr.io/timhillier/rustbot:latest
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build . -t ghcr.io/timhillier/rustbot:latest
+
+      - name: Push Docker image
+        run: docker push ghcr.io/timhillier/rustbot:latest
