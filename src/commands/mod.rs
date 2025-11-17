@@ -4,3 +4,4 @@ pub mod judge;
 pub mod score;
 pub mod trade;
 pub mod shop;
+pub mod help;

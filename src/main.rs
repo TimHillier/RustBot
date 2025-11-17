@@ -9,6 +9,7 @@ use crate::commands::score::*;
 use crate::commands::ping::*;
 use crate::commands::trade::*;
 use crate::commands::shop::*;
+use crate::commands::help::*;
 
 use crate::bot_types::{Data, Error};
 
@@ -170,7 +171,7 @@ async fn main() {
 
     let framework = poise::Framework::<Data, Error>::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), judge(), score(), top(), leader(), smash(), trade(), wallet(), shop(), item_count()],
+            commands: vec![ping(), judge(), score(), top(), leader(), smash(), trade(), wallet(), shop(), item_count(), help()],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
                 ..Default::default()
