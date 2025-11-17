@@ -46,7 +46,7 @@ impl EventHandler for Handler {
             return;
         }
 
-        let mut _rng = rand::rng().random_range(0..100);
+        let mut _rng = rand::rng().random_range(0..500);
         let current_number_of_bombs = get_count("mine").await;
         if _rng <= current_number_of_bombs {
             let mut member = get_member(_ctx.clone(), msg.clone()).await;
