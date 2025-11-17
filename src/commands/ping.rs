@@ -1,7 +1,7 @@
 use crate::bot_types::{Error, _Context as Context };
 use poise::serenity_prelude as serenity;
-use serenity::all::Timestamp;
 
+/// Just a test command. Does nothing.
 #[poise::command(prefix_command)]
 pub async fn ping(ctx: Context<'_>,
                   #[description = "Selected User"] user: Option<serenity::User>,

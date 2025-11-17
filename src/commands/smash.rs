@@ -6,6 +6,7 @@ Returns smash or pass.
 use crate::bot_utils;
 use crate::bot_types::{Error, _Context as Context};
 
+/// Smash or Pass a message. Used as a reply.
 #[poise::command(prefix_command)]
 pub async fn smash(ctx: Context<'_>) -> Result<(), Error>{
     let mut reply = if bot_utils::get_random_bool(0.5) {"Smash"} else {"Pass"};
