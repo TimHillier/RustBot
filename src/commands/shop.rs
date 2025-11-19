@@ -121,8 +121,8 @@ pub async fn update_shop_count(item_name: String, current_increase: i16, total_i
 }
 
 /// Returns the current amount of an item.
-#[poise::command(prefix_command, aliases("count", "getCount"))]
-pub async fn item_count(
+#[poise::command(prefix_command, aliases("itemCount", "getCount"))]
+pub async fn count(
     ctx: Context<'_>,
     #[description = "The symbol of the item you want"] symbol: String,
 ) -> Result<(), Error> {
