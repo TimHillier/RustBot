@@ -16,8 +16,9 @@ pub async fn help (
         };
     }
 
-    let extra_text_at_bottom = "\
-    Type `!help <command> for more info.";
+    let extra_text_at_bottom = "
+    Type `!help <command> for more info.\
+    Some commands have aliases";
 
     let config = HelpConfiguration {
         show_subcommands: true,
