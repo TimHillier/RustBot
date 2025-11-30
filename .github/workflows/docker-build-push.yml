@@ -17,8 +17,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
-        run: docker build . -t ghcr.io/timhillier/rustbot:latest
+      - name: Extract version from Cargo.toml
+        id: get_version
+        run: |
+          version=$(grep '^version =' Cargo.toml | head -1 | sed -E "s/version = \"(.*)\"/\1/")
+          echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Push Docker image
-        run: docker push ghcr.io/timhillier/rustbot:latest
+      - name: Build Docker image with both tags
+        run: |
+          docker build . -t ghcr.io/timhillier/rustbot:latest -t ghcr.io/timhillier/rustbot:${{ steps.get_version.outputs.version }}
+
+      - name: Push Docker images
+        run: |
+          docker push ghcr.io/timhillier/rustbot:latest
+          docker push ghcr.io/timhillier/rustbot:${{ steps.get_version.outputs.version }}
