@@ -2,6 +2,8 @@ mod bot_types;
 mod bot_utils;
 mod commands;
 mod emoji;
+mod runescape_utils;
+
 // Commands;
 use crate::commands::help::*;
 use crate::commands::judge::*;
@@ -78,6 +80,9 @@ impl EventHandler for Handler {
         let score = get_points_from_emoji(reaction);
 
         if _add_reaction.user_id.unwrap().to_string() == message.id.to_string() {
+            // if (_add_reaction.user_id.unwrap().to_string() == "180083924414758912") {
+            //     let mut memeber = get_member(_ctx.clone(), message.clone()).await;
+            // }
             return;
         }
 
@@ -208,6 +213,7 @@ async fn main() {
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
+    // TODO make commands combine vectors from all the command files.
     let framework = poise::Framework::<Data, Error>::builder()
         .options(poise::FrameworkOptions {
             commands: vec![
@@ -223,6 +229,7 @@ async fn main() {
                 count(),
                 help(),
                 grand_exchange(),
+                grand_exchange_history(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
