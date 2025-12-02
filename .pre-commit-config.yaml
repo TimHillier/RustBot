@@ -1,0 +1,18 @@
+repos:
+  - repo: local
+    hooks:
+      - id: rustfmt
+        name: rustfmt
+        entry: bash -c 'cargo fmt --all -- --check || (echo "Code is not formatted. Run, cargo fmt --all" && exit 1)'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: clippy
+        name: clippy
+        entry: bash -c 'cargo clippy --all-targets --all-features -- -D warnings || exit 1'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

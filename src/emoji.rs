@@ -1,7 +1,7 @@
-use std::string::ToString;
+use crate::bot_utils;
 use serenity::model::channel::ReactionType;
 use serenity::model::id::EmojiId;
-use crate::bot_utils;
+use std::string::ToString;
 
 fn get_plus_two() -> ReactionType {
     let plus_two: ReactionType = ReactionType::Custom {
@@ -9,45 +9,43 @@ fn get_plus_two() -> ReactionType {
         id: EmojiId::new(924536822472802337),
         name: Some("p2".to_string()),
     };
-    return plus_two;
+    plus_two
 }
 
 fn get_minus_two() -> ReactionType {
-    let minus_two:ReactionType = ReactionType::Custom {
+    let minus_two: ReactionType = ReactionType::Custom {
         animated: false,
         id: EmojiId::new(924536784191365120),
         name: Some("m2".to_string()),
     };
-    return minus_two;
+    minus_two
 }
 
 fn get_manny() -> ReactionType {
     let manny: ReactionType = ReactionType::Custom {
         animated: false,
         id: EmojiId::new(929987409360343051),
-        name: Some("manny".to_string())
+        name: Some("manny".to_string()),
     };
-    return manny;
-
+    manny
 }
 fn get_doot() -> ReactionType {
-   let doot: ReactionType = ReactionType::Custom {
-       animated: false,
-       id: EmojiId::new(929985012554682469),
-       name: Some("doot".to_string())
-   } ;
-    return doot;
+    let doot: ReactionType = ReactionType::Custom {
+        animated: false,
+        id: EmojiId::new(929985012554682469),
+        name: Some("doot".to_string()),
+    };
+    doot
 }
 
 fn get_winner() -> ReactionType {
     let winner: ReactionType = ReactionType::Custom {
         animated: false,
         id: EmojiId::new(1348181039779938366),
-        name: Some("winner".to_string())
-    } ;
+        name: Some("winner".to_string()),
+    };
     winner
 }
-
 
 pub fn get_emoji(emoji_name: &str) -> ReactionType {
     let current_env = bot_utils::get_env();

@@ -1,5 +1,5 @@
 use reqwest::{Client, Url};
-use serde::{de::Error, Deserialize};
+use serde::{Deserialize, de::Error};
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -15,8 +15,6 @@ pub struct RSClient {
 #[derive(Debug, Deserialize, Clone)]
 pub struct RSItemPrice {
     pub item: String,
-    pub id: String,
-    pub timestamp: TimeStampValue,
     pub price: u64,
     pub volume: u64,
 }
@@ -36,7 +34,6 @@ pub struct RSItemPriceHistory {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct RSPrice {
-    pub id: String,
     pub timestamp: TimeStampValue,
     pub price: u64,
     pub volume: u64,
@@ -47,11 +44,11 @@ pub type RSPriceHistoryMapResponse = HashMap<String, Vec<RSPrice>>;
 #[derive(Error, Debug)]
 pub enum RSError {
     #[error("HTTP error: {0}")]
-    HttpError(#[from] reqwest::Error),
+    Http(#[from] reqwest::Error),
     #[error("Failed to parse JSON response: {0}")]
-    JsonParseError(#[from] serde_json::Error),
+    JsonParse(#[from] serde_json::Error),
     #[error("Failed to parse URL: {0}")]
-    UrlParseError(#[from] url::ParseError),
+    UrlParse(#[from] url::ParseError),
 }
 
 impl Default for RSClient {
@@ -86,31 +83,24 @@ impl RSClient {
             encoded_name
         );
 
-        let url = self.base_url.join(&path).map_err(RSError::UrlParseError)?;
-        let response = self
-            .client
-            .get(url)
-            .send()
-            .await
-            .map_err(RSError::HttpError)?;
+        let url = self.base_url.join(&path).map_err(RSError::UrlParse)?;
+        let response = self.client.get(url).send().await.map_err(RSError::Http)?;
 
-        let body_text = response.text().await.map_err(RSError::HttpError)?;
+        let body_text = response.text().await.map_err(RSError::Http)?;
 
         // The API returns a HashMap of item names to price data
         let price_map: RSPriceMapResponse =
-            serde_json::from_str(&body_text).map_err(RSError::JsonParseError)?;
+            serde_json::from_str(&body_text).map_err(RSError::JsonParse)?;
 
         // Extract the first (and typically only) entry from the map
         let (item_name, price_data) = price_map
             .into_iter()
             .next()
-            .ok_or_else(|| RSError::JsonParseError(serde_json::Error::custom("empty response")))?;
+            .ok_or_else(|| RSError::JsonParse(serde_json::Error::custom("empty response")))?;
 
         // Convert RSPrice to RSItemPrice by adding the item name
         let price_response = RSItemPrice {
             item: item_name,
-            id: price_data.id,
-            timestamp: price_data.timestamp,
             price: price_data.price,
             volume: price_data.volume,
         };
@@ -125,29 +115,24 @@ impl RSClient {
             encoded_name
         );
 
-        let url = self.base_url.join(&path).map_err(RSError::UrlParseError)?;
-        let response = self
-            .client
-            .get(url)
-            .send()
-            .await
-            .map_err(RSError::HttpError)?;
+        let url = self.base_url.join(&path).map_err(RSError::UrlParse)?;
+        let response = self.client.get(url).send().await.map_err(RSError::Http)?;
 
-        let body_text = response.text().await.map_err(RSError::HttpError)?;
+        let body_text = response.text().await.map_err(RSError::Http)?;
 
         // The API returns a HashMap of item names to arrays of price history data
         let price_history_map: RSPriceHistoryMapResponse = serde_json::from_str(&body_text)
             .map_err(|e| {
                 eprintln!("JSON parse error at position: {}", e);
                 eprintln!("Response body: {}", body_text);
-                RSError::JsonParseError(e)
+                RSError::JsonParse(e)
             })?;
 
         // Extract the first (and typically only) entry from the map
         let (item_name, price_history) = price_history_map
             .into_iter()
             .next()
-            .ok_or_else(|| RSError::JsonParseError(serde_json::Error::custom("empty response")))?;
+            .ok_or_else(|| RSError::JsonParse(serde_json::Error::custom("empty response")))?;
 
         let item_price_history = RSItemPriceHistory {
             item: item_name,
