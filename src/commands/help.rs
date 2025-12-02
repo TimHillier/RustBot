@@ -1,13 +1,13 @@
-use poise::builtins::HelpConfiguration;
 use crate::bot_types::{_Context as Context, Error};
+use poise::builtins::HelpConfiguration;
 
 /// Display Help & Command menu.
 #[poise::command(prefix_command)]
-pub async fn help (
+pub async fn help(
     ctx: Context<'_>,
     #[description = "Command to get help for."]
     #[rest]
-    mut command: Option<String>
+    mut command: Option<String>,
 ) -> Result<(), Error> {
     if ctx.invoked_command_name() != "help" {
         command = match command {

@@ -2,8 +2,8 @@ use crate::bot_types::{_Context as Context, Error};
 use crate::bot_utils;
 use crate::emoji;
 use crate::emoji::get_emoji;
-use poise::serenity_prelude as serenity;
 use bot_utils::get_score;
+use poise::serenity_prelude as serenity;
 
 /**
 Trades +2's from the caller, to the reviver.
@@ -53,7 +53,13 @@ pub async fn trade(
         number_amount.clone().unwrap(),
     )
     .await;
-    bot_utils::add_trade_log(message_id, from_user, receiving_user.clone(), amount.clone()).await;
+    bot_utils::add_trade_log(
+        message_id,
+        from_user,
+        receiving_user.clone(),
+        amount.clone(),
+    )
+    .await;
     ctx.reply(format!(
         "{} has traded {} {} {}. The updated scores are {}: {} and {}: {}",
         from_user.clone(),
@@ -61,10 +67,12 @@ pub async fn trade(
         amount.clone(),
         get_emoji("plus_two"),
         from_user,
-        get_score(from_user_id.as_str()).await.to_string(),
+        get_score(from_user_id.as_str()).await,
         receiving_user,
-        get_score(receiving_user_id.as_str()).await.to_string()
-    )).await.expect("Error Updating Score");
+        get_score(receiving_user_id.as_str()).await
+    ))
+    .await
+    .expect("Error Updating Score");
     Ok(())
 }
 

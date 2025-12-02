@@ -1,18 +1,16 @@
-use crate::bot_types::{Error, _Context as Context };
+use crate::bot_types::{_Context as Context, Error};
 use poise::serenity_prelude as serenity;
 
 /// Just a test command. Does nothing.
 #[poise::command(prefix_command)]
-pub async fn ping(ctx: Context<'_>,
-                  #[description = "Selected User"] user: Option<serenity::User>,
-    )-> Result<(), Error> {
+pub async fn ping(
+    ctx: Context<'_>,
+    #[description = "Selected User"] user: Option<serenity::User>,
+) -> Result<(), Error> {
     let u = user.as_ref().unwrap_or_else(|| ctx.author());
     let response = format!("{}'s account was created at {}", u.name, u.created_at());
     let embed = serenity::CreateEmbed::default().title(response);
-    let reply = {
-        poise::CreateReply::default()
-            .embed(embed)
-    };
+    let reply = { poise::CreateReply::default().embed(embed) };
 
     ctx.send(reply).await?;
     Ok(())

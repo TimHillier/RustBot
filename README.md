@@ -36,8 +36,8 @@ All commands use the `!` prefix.
 
 ### Fun Commands
 
-- **`!smash`** - Returns a random "Smash" or "Pass" response. Used as a reply to messages. 
-- **`!judge`** - Judges a post by adding a random +2 or -2 reaction. Must be used as a reply to another message. Prevents duplicate judgments on the same post. *Note: Marked for rework.*
+- **`!smash`** - Returns a random "Smash" or "Pass" response. Used as a reply to messages.
+- **`!judge`** - Judges a post by adding a random +2 or -2 reaction. Must be used as a reply to another message. Prevents duplicate judgments on the same post. _Note: Marked for rework._
 
 ### Utility Commands
 
@@ -52,3 +52,36 @@ All commands use the `!` prefix.
 - **Leaderboards**: Track top performers in the community
 - **Migration Support**: Database migrations managed through sqlx-cli
 
+## Development
+
+### Pre-commit Hooks
+
+This project uses pre-commit hooks to ensure code quality before commits. To set up:
+
+1. Install pre-commit (requires Python):
+
+   ```bash
+   pip install pre-commit
+   ```
+
+2. Install the git hooks:
+
+   ```bash
+   pre-commit install
+   ```
+
+3. The hooks will now run automatically on every commit, checking:
+   - **rustfmt**: Code formatting with `cargo fmt`
+   - **clippy**: Linting with `cargo clippy`
+
+To manually run the hooks:
+
+```bash
+pre-commit run --all-files
+```
+
+To skip hooks for a single commit (not recommended):
+
+```bash
+git commit --no-verify
+```

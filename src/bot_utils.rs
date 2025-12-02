@@ -4,7 +4,6 @@ use rand::Rng;
 use serde::Deserialize;
 use sqlx::{Pool, Sqlite};
 use std::fs;
-use toml;
 
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
@@ -16,13 +15,12 @@ struct SecretsToml {
 }
 
 pub fn get_toml() -> String {
-    let toml_str = fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML");
-    return toml_str;
+    fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML")
 }
 pub fn get_secret() -> String {
     let toml_str = get_toml();
     let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
-    return secrets_toml.discord_token;
+    secrets_toml.discord_token
 }
 
 pub fn get_env() -> String {
@@ -32,7 +30,7 @@ pub fn get_env() -> String {
     if environment.is_empty() {
         return String::from("testing");
     }
-    return environment;
+    environment
 }
 
 pub fn is_bot(id: String) -> bool {
@@ -46,18 +44,12 @@ pub fn is_bot(id: String) -> bool {
 
 pub fn get_random_bool(prob: f64) -> bool {
     let mut rng = rand::rng();
-    return rng.random_bool(prob);
-}
-
-#[allow(dead_code)]
-pub fn get_random_number() -> i32 {
-    let mut rng = rand::thread_rng();
-    return rng.gen_range(0..999);
+    rng.random_bool(prob)
 }
 
 // A connection to the database.
 pub async fn connect_to_database() -> Pool<Sqlite> {
-    let database = sqlx::sqlite::SqlitePoolOptions::new()
+    sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(5)
         .connect_with(
             sqlx::sqlite::SqliteConnectOptions::new()
@@ -65,9 +57,7 @@ pub async fn connect_to_database() -> Pool<Sqlite> {
                 .create_if_missing(true),
         )
         .await
-        .expect("Couldn't Connect to database.");
-
-    return database;
+        .expect("Couldn't Connect to database.")
 }
 
 pub async fn score_update(user_id: &str, points: i16) {
@@ -201,50 +191,6 @@ pub async fn take_plus_two(user_id: &str, amount_taken: i16) {
 }
 
 /**
-Directly give the user_id plus 2's
-**/
-pub async fn give_minus_two(user_id: &str, amount_given: i16) {
-    let database = connect_to_database().await;
-    sqlx::query!(
-        "UPDATE user SET minus_two_received = minus_two_received + ? WHERE user_id = ?",
-        amount_given,
-        user_id
-    )
-    .execute(&database)
-    .await
-    .expect("Couldn't give minus two");
-}
-
-/**
-Get the current amount of minus 2's the user has.
-**/
-pub async fn get_minus_two_received(user_id: &str) {
-    let database = connect_to_database().await;
-    let plus_2_amount = sqlx::query!(
-        "SELECT minus_two_received FROM user WHERE user_id = ?",
-        user_id
-    )
-    .fetch_all(&database)
-    .await
-    .unwrap();
-}
-
-/**
-Directly take the user_id plus 2's
-**/
-pub async fn take_minus_two(user_id: &str, amount_taken: i16) {
-    let database = connect_to_database().await;
-    sqlx::query!(
-        "UPDATE user SET minus_two_received = minus_two_received - ? WHERE user_id = ?",
-        amount_taken,
-        user_id
-    )
-    .execute(&database)
-    .await
-    .expect("Couldn't take minus two");
-}
-
-/**
 Get the users score formated for userInfo.
 **/
 pub async fn get_user_info_score(user: &str) -> UserInfo {
@@ -254,10 +200,10 @@ pub async fn get_user_info_score(user: &str) -> UserInfo {
         .await
         .unwrap();
 
-    return UserInfo {
+    UserInfo {
         user_name: user.user_name,
         score: user.score.unwrap(),
-    };
+    }
 }
 
 /**
@@ -270,7 +216,7 @@ pub async fn get_score(user: &str) -> i64 {
         .await
         .unwrap();
 
-    return result.score.unwrap();
+    result.score.unwrap()
 }
 
 /**
@@ -295,7 +241,7 @@ pub(crate) async fn get_top_scores(limit: i8) -> crate::commands::score::UserInf
         user_vector.0.push(temp_user)
     }
 
-    return user_vector;
+    user_vector
 }
 
 /**
@@ -362,7 +308,7 @@ pub async fn get_shop_items() -> crate::commands::shop::ItemInfoVec {
         };
         item_vector.0.push(temp_item)
     }
-    return item_vector;
+    item_vector
 }
 
 /**
@@ -371,10 +317,12 @@ Returns the current number of active Bombs.
 pub async fn get_count(item: &str) -> i64 {
     let database = connect_to_database().await;
     let number_of_mines = sqlx::query!(
-        "SELECT current_amount FROM shop_items WHERE short_name = ?", item
-        ).fetch_one(&database)
-        .await
-        .unwrap();
+        "SELECT current_amount FROM shop_items WHERE short_name = ?",
+        item
+    )
+    .fetch_one(&database)
+    .await
+    .unwrap();
 
     number_of_mines.current_amount
 }
@@ -385,10 +333,12 @@ Resets the current number of active Bombs back to 1.
 pub async fn reset_count(item: &str) {
     let database = connect_to_database().await;
     sqlx::query!(
-        "UPDATE shop_items SET current_amount = 1 WHERE short_name = ?", item
-        ).execute(&database)
-        .await
-        .unwrap();
+        "UPDATE shop_items SET current_amount = 1 WHERE short_name = ?",
+        item
+    )
+    .execute(&database)
+    .await
+    .unwrap();
 }
 
 pub async fn get_current_bot_id() -> String {
@@ -398,5 +348,4 @@ pub async fn get_current_bot_id() -> String {
         return secrets_toml.live_bot_user_id;
     }
     secrets_toml.testing_bot_user_id
-
 }

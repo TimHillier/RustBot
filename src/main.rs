@@ -29,9 +29,9 @@ use serenity::model::channel::{Message, Reaction, ReactionType};
 use serenity::model::gateway::Ready;
 use serenity::model::id::{ChannelId, GuildId, MessageId};
 use serenity::prelude::*;
-use std::collections::HashSet;
 
 struct Handler;
+const MAX_BOMB_RANGE: i64 = 300;
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -49,7 +49,7 @@ impl EventHandler for Handler {
             return;
         }
 
-        let mut _rng = rand::rng().random_range(0..500);
+        let mut _rng = rand::rng().random_range(0..MAX_BOMB_RANGE);
         let current_number_of_bombs = get_count("mine").await;
         if _rng <= current_number_of_bombs {
             let mut member = get_member(_ctx.clone(), msg.clone()).await;
@@ -62,8 +62,10 @@ impl EventHandler for Handler {
             msg.reply(
                 &_ctx.http,
                 format!(
-                    "{} You're our lucky loser! See you in 10 minutes. :3",
-                    get_emoji("winner")
+                    "{} You're our lucky loser! See you in 10 minutes. :3 {}/{}",
+                    get_emoji("winner"),
+                    current_number_of_bombs,
+                    MAX_BOMB_RANGE,
                 ),
             )
             .await
@@ -78,13 +80,6 @@ impl EventHandler for Handler {
             .unwrap()
             .author;
         let score = get_points_from_emoji(reaction);
-
-        if _add_reaction.user_id.unwrap().to_string() == message.id.to_string() {
-            // if (_add_reaction.user_id.unwrap().to_string() == "180083924414758912") {
-            //     let mut memeber = get_member(_ctx.clone(), message.clone()).await;
-            // }
-            return;
-        }
 
         if score == 2 {
             bot_utils::plus_two(
@@ -138,7 +133,7 @@ impl EventHandler for Handler {
             .await;
         }
 
-        bot_utils::score_update(&message.id.to_string(), score * -1).await;
+        bot_utils::score_update(&message.id.to_string(), -score).await;
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
@@ -164,8 +159,7 @@ Returns the Member of the message sent.
 **/
 async fn get_member(_ctx: Context, msg: Message) -> Member {
     let guild_id = msg.guild_id.unwrap();
-    let member = guild_id.member(&_ctx.http, msg.author.id).await.unwrap();
-    member
+    guild_id.member(&_ctx.http, msg.author.id).await.unwrap()
 }
 
 fn get_points_from_emoji(reaction: ReactionType) -> i16 {
@@ -176,7 +170,7 @@ fn get_points_from_emoji(reaction: ReactionType) -> i16 {
     if reaction == emoji::get_emoji("minus_two") || reaction == emoji::get_emoji("doot") {
         score = -2;
     }
-    return score;
+    score
 }
 
 #[hook]
@@ -187,7 +181,6 @@ async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &
 #[tokio::main]
 async fn main() {
     let token = bot_utils::get_secret();
-    let http = Http::new(&token);
 
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES
@@ -196,22 +189,6 @@ async fn main() {
         | GatewayIntents::GUILD_MESSAGE_REACTIONS
         | GatewayIntents::GUILD_VOICE_STATES
         | GatewayIntents::MESSAGE_CONTENT;
-
-    let (owners, bot_id) = match http.get_current_application_info().await {
-        Ok(info) => {
-            let mut owners = HashSet::new();
-            if let Some(team) = info.team {
-                owners.insert(team.owner_user_id);
-            } else {
-                owners.insert(info.owner.unwrap().id);
-            }
-            match http.get_current_user().await {
-                Ok(bot_id) => (owners, bot_id.id),
-                Err(why) => panic!("Could not access the bot id: {:?}", why),
-            }
-        }
-        Err(why) => panic!("Could not access application info: {:?}", why),
-    };
 
     // TODO make commands combine vectors from all the command files.
     let framework = poise::Framework::<Data, Error>::builder()
