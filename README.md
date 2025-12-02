@@ -1,4 +1,5 @@
-[![Build Docker and Deploy](https://github.com/TimHillier/RustBot/actions/workflows/docker-build-push.yml/badge.svg)](https://github.com/TimHillier/RustBot/actions/workflows/docker-build-push.yml)
+[![Build](https://github.com/TimHillier/RustBot/actions/workflows/docker-build-push.yml/badge.svg)](https://github.com/TimHillier/RustBot/actions/workflows/docker-build-push.yml)
+[![Formating](https://github.com/TimHillier/RustBot/actions/workflows/rust-cs-fmt.yml/badge.svg)](https://github.com/TimHillier/RustBot/actions/workflows/rust-cs-fmt.yml)
 
 # RustBot
 
