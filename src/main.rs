@@ -195,6 +195,7 @@ async fn main() {
         .options(poise::FrameworkOptions {
             commands: vec![
                 ping(),
+                version(),
                 judge(),
                 score(),
                 top(),

@@ -15,3 +15,11 @@ pub async fn ping(
     ctx.send(reply).await?;
     Ok(())
 }
+
+/// Returns the version of the bot.
+#[poise::command(prefix_command, required_permissions = "ADMINISTRATOR")]
+pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
+    let response = format!("The bot is running version {}", env!("CARGO_PKG_VERSION"));
+    ctx.reply(response).await?;
+    Ok(())
+}
