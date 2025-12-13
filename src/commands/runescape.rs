@@ -117,7 +117,8 @@ pub async fn ge_set_alias(
     let database = connect_to_database().await;
 
     sqlx::query!(
-        "INSERT OR IGNORE INTO ge_aliases (alias, item) VALUES (?, ?)",
+        "INSERT INTO ge_aliases (alias, item) VALUES (?, ?) \
+         ON CONFLICT(alias) DO UPDATE SET item = excluded.item",
         alias,
         item
     )
