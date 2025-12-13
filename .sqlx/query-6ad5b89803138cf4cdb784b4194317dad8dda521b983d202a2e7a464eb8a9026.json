@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE user SET score = score + ? WHERE user_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "6ad5b89803138cf4cdb784b4194317dad8dda521b983d202a2e7a464eb8a9026"
+}

@@ -5,9 +5,9 @@ mod emoji;
 mod runescape_utils;
 
 // Commands;
+use crate::commands::admin::*;
 use crate::commands::help::*;
 use crate::commands::judge::*;
-use crate::commands::ping::*;
 use crate::commands::runescape::*;
 use crate::commands::score::*;
 use crate::commands::shop::*;
@@ -208,6 +208,8 @@ async fn main() {
                 help(),
                 grand_exchange(),
                 grand_exchange_history(),
+                ge_set_alias(),
+                lookup_alias(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),

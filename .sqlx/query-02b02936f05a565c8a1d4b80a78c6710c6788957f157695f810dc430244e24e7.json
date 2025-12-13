@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT plus_two_received FROM user WHERE user_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "plus_two_received",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "02b02936f05a565c8a1d4b80a78c6710c6788957f157695f810dc430244e24e7"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT user_name, score FROM user WHERE user_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "user_name",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "score",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "449ae091833791eb191457979a995d3ed6b558d9f8b80b31b303ad5721e9b064"
+}

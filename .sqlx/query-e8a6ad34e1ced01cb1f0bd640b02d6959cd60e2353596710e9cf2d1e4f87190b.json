@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO judgedPosts (message_id, message_owner, command_caller, result) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "e8a6ad34e1ced01cb1f0bd640b02d6959cd60e2353596710e9cf2d1e4f87190b"
+}
