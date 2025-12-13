@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE user SET plus_two_given = plus_two_given + ? WHERE user_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "16453996a2ad833268f570dbac5099e80faed1b48e3113dfcaf82d09caa0b087"
+}

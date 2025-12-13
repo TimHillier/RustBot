@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO tradeLogs (message_id, from_user, receiving_user, amount ) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "e0843f92771870ca1425f0b6a8d98362eaf43017a0600a93eb8a7976415a147c"
+}

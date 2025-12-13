@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM shop_items WHERE short_name = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "item_name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "short_name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "price",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "description",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "current_amount",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "total_amount",
+        "ordinal": 6,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a78c4321860d633e59e99a39d77b14d7a42fc2fd2571aaea4c3042883cb80d67"
+}

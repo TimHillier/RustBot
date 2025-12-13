@@ -3,5 +3,4 @@
 /data/rustbot.sqlite
 .env
 .idea/
-.sqlx/
 *.DS_Store

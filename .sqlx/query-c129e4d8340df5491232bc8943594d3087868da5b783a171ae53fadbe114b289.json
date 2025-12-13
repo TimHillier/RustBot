@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT current_amount FROM shop_items WHERE short_name = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "current_amount",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c129e4d8340df5491232bc8943594d3087868da5b783a171ae53fadbe114b289"
+}
