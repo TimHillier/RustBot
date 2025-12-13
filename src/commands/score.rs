@@ -57,10 +57,21 @@ Returns the top 10 scoring users.
 pub async fn leader(ctx: Context<'_>) -> Result<(), Error> {
     let top_scores = get_top_scores(10).await;
 
-    let mut reply_string: String = String::new();
+    let mut reply_string = String::from("🏆 **Leaderboard** 🏆\n\n");
     for (i, value) in top_scores.0.iter().enumerate() {
-        reply_string.push_str((i + 1).to_string().as_str());
-        reply_string.push_str(value.to_string().as_str());
+        let place = match i {
+            0 => "🥇",
+            1 => "🥈",
+            2 => "🥉",
+            _ => "🔹",
+        };
+        reply_string.push_str(&format!(
+            "{} **#{}** — {} — **{}** points\n",
+            place,
+            i + 1,
+            value.user_name,
+            value.score
+        ));
     }
 
     if let Err(why) = ctx.reply(reply_string).await {
