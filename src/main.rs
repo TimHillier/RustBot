@@ -5,9 +5,9 @@ mod emoji;
 mod runescape_utils;
 
 // Commands;
+use crate::commands::admin::*;
 use crate::commands::help::*;
 use crate::commands::judge::*;
-use crate::commands::ping::*;
 use crate::commands::runescape::*;
 use crate::commands::score::*;
 use crate::commands::shop::*;
