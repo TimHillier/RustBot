@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO ge_aliases (alias, item) VALUES (?, ?) ON CONFLICT(alias) DO UPDATE SET item = excluded.item",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "056fea6383106223186232052a187b841b7c51e5f791899224ffadeb0a0298d9"
+}
