@@ -207,6 +207,8 @@ async fn main() {
                 help(),
                 grand_exchange(),
                 grand_exchange_history(),
+                ge_set_alias(),
+                lookup_alias(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),

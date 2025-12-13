@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT user_name, score FROM user ORDER BY score DESC LIMIT ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "user_name",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "score",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "94039289bc9ee8e3604f1a70db1a1aa151803cb3d2cedf65478d9347453a2e9e"
+}

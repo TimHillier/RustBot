@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT item FROM ge_aliases WHERE alias = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "item",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "d7e52f310680e3f6147b6d0671ded220c494360ab42c82c54c2292f5074d54a3"
+}

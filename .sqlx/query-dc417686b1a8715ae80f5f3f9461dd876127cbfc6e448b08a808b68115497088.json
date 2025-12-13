@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT item_name, price, short_name, description FROM shop_items ORDER BY price DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "item_name",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "price",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "short_name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "dc417686b1a8715ae80f5f3f9461dd876127cbfc6e448b08a808b68115497088"
+}
