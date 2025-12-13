@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE user SET minus_two_given = minus_two_given + ? WHERE user_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "91901703f281c3a55502396f47aa240b592d58e9e4eb0448e0f4367e68672066"
+}

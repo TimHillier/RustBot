@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE shop_items SET current_amount = current_amount + ?, total_amount = total_amount + ? WHERE short_name = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "8cbe619e073b5508f84fe654befeac87f24fe90d0c94f3add045a583c28d686c"
+}

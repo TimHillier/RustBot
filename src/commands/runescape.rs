@@ -1,4 +1,5 @@
 use crate::bot_types::{_Context as Context, Error};
+use crate::bot_utils::connect_to_database;
 use crate::runescape_utils::rs_client::{RSClient, RSPrice, TimeStampValue};
 use chrono::DateTime;
 use poise::serenity_prelude as serenity;
@@ -13,8 +14,19 @@ pub async fn grand_exchange(
     ctx: Context<'_>,
     #[description = "The name of the item you want to look up"]
     #[rest]
-    item: String,
+    mut item: String,
 ) -> Result<(), Error> {
+    let database = connect_to_database().await;
+    let alias = sqlx::query!("SELECT item FROM ge_aliases WHERE alias = ?", item)
+        .fetch_optional(&database)
+        .await?;
+
+    if let Some(alias) = alias
+        && alias.item.is_some()
+    {
+        item = alias.item.unwrap();
+    }
+
     let response = RSClient::new().item_name(item).get_price().await?;
     let item_name_formatted = response
         .item
@@ -90,6 +102,61 @@ pub async fn grand_exchange_history(
         .thumbnail(image_url);
 
     ctx.send(poise::CreateReply::default().embed(embed)).await?;
+
+    Ok(())
+}
+
+#[poise::command(prefix_command, aliases("ge-alias", "gealias", "gea"))]
+pub async fn ge_set_alias(
+    ctx: Context<'_>,
+    #[description = "The alias you want to set"] alias: String,
+    #[description = "The item you want to set the alias for"]
+    #[rest]
+    item: String,
+) -> Result<(), Error> {
+    let database = connect_to_database().await;
+
+    sqlx::query!(
+        "INSERT OR IGNORE INTO ge_aliases (alias, item) VALUES (?, ?)",
+        alias,
+        item
+    )
+    .execute(&database)
+    .await
+    .expect("Couldn't set GE alias.");
+
+    ctx.reply(format!("GE alias `{}` for `{}` set.", alias, item))
+        .await?;
+
+    Ok(())
+}
+
+#[poise::command(
+    prefix_command,
+    aliases("ge-lookup-alias", "lookup", "?", "alias", "what")
+)]
+pub async fn lookup_alias(
+    ctx: Context<'_>,
+    #[description = "The alias you want to look up"] alias: String,
+) -> Result<(), Error> {
+    let database = connect_to_database().await;
+
+    let result = sqlx::query!("SELECT item FROM ge_aliases WHERE alias = ?", alias,)
+        .fetch_optional(&database)
+        .await
+        .expect("Couldn't find GE alias.");
+
+    if let Some(result) = result {
+        ctx.reply(format!(
+            "GE alias `{}` is `{}`.",
+            alias,
+            result.item.unwrap()
+        ))
+        .await?;
+    } else {
+        ctx.reply(format!("GE alias `{}` not found.", alias))
+            .await?;
+    }
 
     Ok(())
 }

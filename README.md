@@ -86,3 +86,8 @@ To skip hooks for a single commit (not recommended):
 ```bash
 git commit --no-verify
 ```
+
+### Add and Run Migrations
+```bash
+cargo sqlx migrate run --database-url sqlite:data/rustbot.sqlite --source data/migrations
+```
