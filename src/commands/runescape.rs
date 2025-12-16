@@ -65,9 +65,20 @@ pub async fn grand_exchange_history(
     ctx: Context<'_>,
     #[description = "The name of the item you want to look up"]
     #[rest]
-    item: String, // make this optional so that if they just do !hs then it just does the last item.
+    mut item: String, // make this optional so that if they just do !hs then it just does the last item.
 ) -> Result<(), Error> {
     let time_length = 10;
+    let database = connect_to_database().await;
+    let alias = sqlx::query!("SELECT item FROM ge_aliases WHERE alias = ?", item)
+        .fetch_optional(&database)
+        .await?;
+
+    if let Some(alias) = alias
+        && alias.item.is_some()
+    {
+        item = alias.item.unwrap();
+    }
+
     let response = RSClient::new().item_name(item).get_price_history().await?;
     let item_name_formatted = response
         .item
