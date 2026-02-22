@@ -79,7 +79,12 @@ impl EventHandler for Handler {
             .await
             .unwrap()
             .author;
-        let score = get_points_from_emoji(reaction);
+        let score = get_points_from_emoji(&reaction);
+
+        if _add_reaction.user_id.unwrap().to_string() == message.id.to_string() {
+            // Don't let the message owner add a reaction to themselves.
+            return;
+        }
 
         if score == 2 {
             bot_utils::plus_two(
@@ -109,9 +114,10 @@ impl EventHandler for Handler {
                 .await
                 .unwrap()
                 .author;
-        let score = get_points_from_emoji(reaction);
+        let score = get_points_from_emoji(&reaction);
 
         if _removed_reaction.user_id.unwrap().to_string() == message.id.to_string() {
+            // Don't let the message owner remove a reaction from themselves.
             return;
         }
 
@@ -162,15 +168,8 @@ async fn get_member(_ctx: Context, msg: Message) -> Member {
     guild_id.member(&_ctx.http, msg.author.id).await.unwrap()
 }
 
-fn get_points_from_emoji(reaction: ReactionType) -> i16 {
-    let mut score: i16 = 0;
-    if reaction == emoji::get_emoji("plus_two") || reaction == emoji::get_emoji("manny") {
-        score = 2;
-    }
-    if reaction == emoji::get_emoji("minus_two") || reaction == emoji::get_emoji("doot") {
-        score = -2;
-    }
-    score
+fn get_points_from_emoji(reaction: &ReactionType) -> i16 {
+    emoji::points_from_reaction(reaction)
 }
 
 #[hook]
