@@ -47,6 +47,26 @@ fn get_winner() -> ReactionType {
     winner
 }
 
+fn get_blessed() -> ReactionType {
+    let blessed: ReactionType = ReactionType::Custom {
+        animated: false,
+        id: EmojiId::new(877421904158412810),
+        name: Some("blessed".to_string()),
+    };
+    blessed
+}
+
+pub fn points_from_reaction(reaction: &ReactionType) -> i16 {
+    let ReactionType::Custom { id, .. } = reaction else {
+        return 0;
+    };
+    match id.get() {
+        924536822472802337 | 929987409360343051 => 2,
+        924536784191365120 | 929985012554682469 => -2,
+        _ => 0,
+    }
+}
+
 pub fn get_emoji(emoji_name: &str) -> ReactionType {
     let current_env = bot_utils::get_env();
     if String::from("live").eq(&current_env) {
@@ -58,10 +78,10 @@ pub fn get_emoji(emoji_name: &str) -> ReactionType {
         }
     } else {
         match emoji_name {
-            "minus_two" => get_doot(),
-            "plus_two" => get_manny(),
+            "doot" => get_doot(),
+            "manny" => get_manny(),
             "winner" => get_doot(),
-            _ => get_manny(),
+            _ => get_blessed(),
         }
     }
 }
