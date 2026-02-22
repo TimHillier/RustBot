@@ -1,0 +1,26 @@
+name: Check version
+
+on:
+  pull_request:
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure package version was updated
+        run: |
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          git fetch origin "$BASE_REF"
+          BASE_VERSION=$(git show "origin/$BASE_REF:Cargo.toml" | grep '^version' | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
+          HEAD_VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
+          if [ "$BASE_VERSION" = "$HEAD_VERSION" ]; then
+            echo "::error::Package version in Cargo.toml was not updated. Bump the version (current: $HEAD_VERSION)."
+            exit 1
+          fi
+          LATEST=$(printf '%s\n%s\n' "$BASE_VERSION" "$HEAD_VERSION" | sort -V | tail -1)
+          if [ "$LATEST" != "$HEAD_VERSION" ]; then
+            echo "::error::Package version ($HEAD_VERSION) is not greater than base ($BASE_VERSION)."
+            exit 1
+          fi
