@@ -12,7 +12,7 @@ pub struct UserInfo {
 
 impl Display for UserInfo {
     fn fmt(&self, f: &mut Formatter) -> fmtResult {
-        writeln!(f, " - {} > {}", self.user_name, self.score)
+        writeln!(f, "**{}** — **{}** ", self.user_name, self.score)
     }
 }
 
@@ -38,10 +38,9 @@ Returns the Top Scoring User.
 pub async fn top(ctx: Context<'_>) -> Result<(), Error> {
     let top_scores = get_top_scores(1).await;
 
-    let mut reply_string: String = String::new();
+    let mut reply_string = String::new();
     for (i, value) in top_scores.0.iter().enumerate() {
-        reply_string.push_str((i + 1).to_string().as_str());
-        reply_string.push_str(value.to_string().as_str());
+        reply_string.push_str(&format!("{}. {}", i + 1, value));
     }
 
     if let Err(why) = ctx.reply(reply_string).await {
@@ -66,7 +65,7 @@ pub async fn leader(ctx: Context<'_>) -> Result<(), Error> {
             _ => "🔹",
         };
         reply_string.push_str(&format!(
-            "{} **#{}** — {} — **{}** points\n",
+            "{} **#{}** — {} — **{}** \n",
             place,
             i + 1,
             value.user_name,
