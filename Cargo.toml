@@ -1,6 +1,6 @@
 [package]
 name = "RustBot"
-version = "0.5.2"
+version = "0.5.4"
 authors = ["Tim Hillier tim.r.hillier@gmail.com"]
 edition = "2024"
 
