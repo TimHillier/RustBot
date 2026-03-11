@@ -1,0 +1,116 @@
+use crate::bot_types::{_Context as Context, Error};
+use image;
+use poise::serenity_prelude as serenity;
+use std::path::{Path, PathBuf};
+use tokio::io::AsyncWriteExt;
+
+const ROOT: &str = "discord_images";
+const ORIGINAL_FOLDER: &str = "original";
+const ROTATE_FOLDER: &str = "rotated";
+
+#[poise::command(prefix_command)]
+pub async fn rotate(ctx: Context<'_>) -> Result<(), Error> {
+    let msg = ctx.channel_id().message(&ctx.http(), ctx.id()).await?;
+
+    if msg.referenced_message.is_none() {
+        ctx.reply("Nothing to rotate...")
+            .await
+            .expect("Or maybe there was?");
+    }
+
+    let ref_msg = msg.referenced_message.clone().unwrap();
+
+    if !matches!(
+        ref_msg
+            .clone()
+            .attachments
+            .first()
+            .and_then(|a| a.content_type.as_deref()),
+        Some("image/png" | "image/jpeg")
+    ) {
+        ctx.reply("That's not an image")
+            .await
+            .expect("Or maybe it was?");
+    }
+    check_folders();
+
+    let attachments_link = ref_msg.attachments.first().unwrap().proxy_url.clone();
+
+    let content_type = ref_msg
+        .attachments
+        .first()
+        .unwrap()
+        .content_type
+        .clone()
+        .unwrap();
+
+    let file_name = generate_file_name(ref_msg.id.to_string(), &content_type);
+
+    let original_file_path = PathBuf::from(ROOT).join(ORIGINAL_FOLDER).join(&file_name);
+    get_and_save_picture(&attachments_link, &original_file_path).await?;
+
+    let rotate_file_path = PathBuf::from(ROOT).join(ROTATE_FOLDER).join(&file_name);
+    rotate_image_and_save(&original_file_path, &rotate_file_path).await;
+
+    let attachment = serenity::CreateAttachment::path(&rotate_file_path).await?;
+    ctx.send(poise::CreateReply::default().attachment(attachment))
+        .await?;
+
+    Ok(())
+}
+
+/**
+Returns file name usually message id + file extension.
+**/
+fn generate_file_name(file_name: String, content_type: &str) -> String {
+    let file_extension = match content_type {
+        "image/png" => ".png",
+        "image/jpeg" => ".jpg",
+        _ => ".png",
+    };
+    file_name + file_extension
+}
+
+/**
+Checks if paths exist, and creates them if they don't.
+**/
+fn check_folders() {
+    let original_path = PathBuf::from(ROOT).join(ORIGINAL_FOLDER);
+    let rotate_path = PathBuf::from(ROOT).join(ROTATE_FOLDER);
+
+    if !Path::new(ROOT).exists() {
+        std::fs::create_dir_all(ROOT).expect("Failed to created directory");
+    }
+
+    if !Path::new(&original_path).exists() {
+        std::fs::create_dir_all(original_path).expect("Failed to created directory");
+    }
+
+    if !Path::new(&rotate_path).exists() {
+        std::fs::create_dir_all(rotate_path).expect("Failed to created directory");
+    }
+}
+
+/**
+Downloads image from url and saves it to file.
+**/
+async fn get_and_save_picture(link: &str, file_path: &Path) -> Result<bool, Error> {
+    let response = reqwest::get(link).await?;
+    if !response.status().is_success() {
+        return Err(Error::from(response.error_for_status().unwrap_err()));
+    }
+    let mut file = tokio::fs::File::create(file_path).await?;
+    let content = response.bytes().await?;
+    file.write_all(&content).await?;
+    Ok(true)
+}
+
+/**
+Rotate and save the image.
+**/
+async fn rotate_image_and_save(file_path: &Path, save_path: &Path) {
+    let img = image::open(file_path).unwrap();
+    //Todo: Update this to take rotation.
+    let rot_img = img.rotate180();
+    rot_img.save(save_path).expect("Error Saving Image");
+}
