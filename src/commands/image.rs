@@ -1,6 +1,8 @@
 use crate::bot_types::{_Context as Context, Error};
 use image;
 use poise::serenity_prelude as serenity;
+use serenity::all::Message;
+use serenity::builder::CreateMessage;
 use std::path::{Path, PathBuf};
 use tokio::io::AsyncWriteExt;
 
@@ -11,6 +13,7 @@ const ROTATE_FOLDER: &str = "rotated";
 #[poise::command(prefix_command)]
 pub async fn rotate(ctx: Context<'_>) -> Result<(), Error> {
     let msg = ctx.channel_id().message(&ctx.http(), ctx.id()).await?;
+    // rotate_image(msg.clone()).await;
 
     if msg.referenced_message.is_none() {
         ctx.reply("Nothing to rotate...")
@@ -99,6 +102,10 @@ async fn get_and_save_picture(link: &str, file_path: &Path) -> Result<bool, Erro
     if !response.status().is_success() {
         return Err(Error::from(response.error_for_status().unwrap_err()));
     }
+    const MAX_SIZE: u64 = 50_000_000;
+    if response.content_length().is_none_or(|len| len > MAX_SIZE) {
+        return Err(Error::from("File to large."));
+    }
     let mut file = tokio::fs::File::create(file_path).await?;
     let content = response.bytes().await?;
     file.write_all(&content).await?;
@@ -113,4 +120,42 @@ async fn rotate_image_and_save(file_path: &Path, save_path: &Path) {
     //Todo: Update this to take rotation.
     let rot_img = img.rotate180();
     rot_img.save(save_path).expect("Error Saving Image");
+}
+
+pub async fn rotate_image_directly(
+    http: &serenity::Http,
+    channel_id: serenity::ChannelId,
+    msg: &Message,
+) -> Result<(), Error> {
+    if !matches!(
+        msg.attachments
+            .first()
+            .and_then(|a| a.content_type.as_deref()),
+        Some("image/png" | "image/jpeg")
+    ) {
+        return Err(Error::from("Not a valid image"));
+    }
+    check_folders();
+    let attachments_link = msg.attachments.first().unwrap().proxy_url.clone();
+    let content_type = msg
+        .attachments
+        .first()
+        .unwrap()
+        .content_type
+        .clone()
+        .unwrap();
+
+    let file_name = generate_file_name(msg.id.to_string(), &content_type);
+
+    let original_file_path = PathBuf::from(ROOT).join(ORIGINAL_FOLDER).join(&file_name);
+    get_and_save_picture(&attachments_link, &original_file_path).await?;
+
+    let rotate_file_path = PathBuf::from(ROOT).join(ROTATE_FOLDER).join(&file_name);
+    rotate_image_and_save(&original_file_path, &rotate_file_path).await;
+
+    let attachment = serenity::CreateAttachment::path(&rotate_file_path).await?;
+    let builder = CreateMessage::new().add_file(attachment);
+    channel_id.send_message(http, builder).await?;
+
+    Ok(())
 }
