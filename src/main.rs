@@ -7,6 +7,7 @@ mod runescape_utils;
 // Commands;
 use crate::commands::admin::*;
 use crate::commands::help::*;
+use crate::commands::image::*;
 use crate::commands::judge::*;
 use crate::commands::runescape::*;
 use crate::commands::score::*;
@@ -62,7 +63,7 @@ impl EventHandler for Handler {
             msg.reply(
                 &_ctx.http,
                 format!(
-                    "{} You're our lucky loser! See you in 10 minutes. :3 {}/{}",
+                    "{} oh nyo, >w< wooks wike somebwody got bwown up {}/{}",
                     get_emoji("winner"),
                     current_number_of_bombs,
                     MAX_BOMB_RANGE,
@@ -70,6 +71,17 @@ impl EventHandler for Handler {
             )
             .await
             .unwrap();
+        }
+
+        // Rotate the image sometimes.
+        if !msg.attachments.is_empty() {
+            let mut _rng = rand::rng().random_range(0..=1000);
+            let lucky_numbers = [5];
+            if lucky_numbers.contains(&_rng) {
+                rotate_image_directly(&_ctx.http, msg.channel_id, &msg)
+                    .await
+                    .expect("Error rotating image");
+            }
         }
     }
 
@@ -202,6 +214,7 @@ async fn main() {
                 smash(),
                 trade(),
                 wallet(),
+                rotate(),
                 shop(),
                 count(),
                 help(),

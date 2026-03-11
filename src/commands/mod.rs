@@ -1,5 +1,6 @@
 pub mod admin;
 pub mod help;
+pub mod image;
 pub mod judge;
 pub mod runescape;
 pub mod score;
