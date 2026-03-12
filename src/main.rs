@@ -215,6 +215,7 @@ async fn main() {
                 trade(),
                 wallet(),
                 rotate(),
+                check_folder(),
                 shop(),
                 count(),
                 help(),

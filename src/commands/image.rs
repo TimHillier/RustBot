@@ -6,7 +6,7 @@ use serenity::builder::CreateMessage;
 use std::path::{Path, PathBuf};
 use tokio::io::AsyncWriteExt;
 
-const ROOT: &str = "discord_images";
+const ROOT: &str = "data/discord_images";
 const ORIGINAL_FOLDER: &str = "original";
 const ROTATE_FOLDER: &str = "rotated";
 
@@ -35,7 +35,7 @@ pub async fn rotate(ctx: Context<'_>) -> Result<(), Error> {
             .await
             .expect("Or maybe it was?");
     }
-    check_folders();
+    make_folders();
 
     let attachments_link = ref_msg.attachments.first().unwrap().proxy_url.clone();
 
@@ -62,6 +62,14 @@ pub async fn rotate(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+#[poise::command(prefix_command, required_permissions = "ADMINISTRATOR")]
+pub async fn check_folder(ctx: Context<'_>) -> Result<(), Error> {
+    make_folders();
+    ctx.reply(format!("Folder Status: {}", check_folders()))
+        .await?;
+    Ok(())
+}
+
 /**
 Returns file name usually message id + file extension.
 **/
@@ -77,7 +85,7 @@ fn generate_file_name(file_name: String, content_type: &str) -> String {
 /**
 Checks if paths exist, and creates them if they don't.
 **/
-fn check_folders() {
+fn make_folders() {
     let original_path = PathBuf::from(ROOT).join(ORIGINAL_FOLDER);
     let rotate_path = PathBuf::from(ROOT).join(ROTATE_FOLDER);
 
@@ -92,6 +100,28 @@ fn check_folders() {
     if !Path::new(&rotate_path).exists() {
         std::fs::create_dir_all(rotate_path).expect("Failed to created directory");
     }
+}
+
+/**
+Checks to see if the folders are make
+**/
+fn check_folders() -> bool {
+    let original_path = PathBuf::from(ROOT).join(ORIGINAL_FOLDER);
+    let rotate_path = PathBuf::from(ROOT).join(ROTATE_FOLDER);
+    let mut status = true;
+
+    if !Path::new(ROOT).exists() {
+        status = false;
+    }
+
+    if !Path::new(&original_path).exists() {
+        status = false;
+    }
+
+    if !Path::new(&rotate_path).exists() {
+        status = false;
+    }
+    status
 }
 
 /**
@@ -135,7 +165,7 @@ pub async fn rotate_image_directly(
     ) {
         return Err(Error::from("Not a valid image"));
     }
-    check_folders();
+    make_folders();
     let attachments_link = msg.attachments.first().unwrap().proxy_url.clone();
     let content_type = msg
         .attachments
