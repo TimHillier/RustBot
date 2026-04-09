@@ -207,6 +207,58 @@ pub async fn get_user_info_score(user: &str) -> UserInfo {
 }
 
 /**
+Get the number of times a user has stepped on a bomb.
+**/
+pub struct BombData {
+    pub user_name: String,
+    pub bombs_exploded: i64,
+}
+pub async fn get_bombs_exploded(user_id: &str) -> BombData {
+    let database = connect_to_database().await;
+    let user = sqlx::query!(
+        "SELECT user_name, bombs_exploded FROM user WHERE user_id = ?",
+        user_id,
+    )
+    .fetch_one(&database)
+    .await
+    .unwrap();
+
+    BombData {
+        user_name: user.user_name,
+        bombs_exploded: user.bombs_exploded.unwrap(),
+    }
+}
+
+/**
+Set the number of times a user has stepped on a bomb.
+**/
+pub async fn set_bombs_exploded(user_id: &str, amount: i16) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "UPDATE user SET bombs_exploded = ? WHERE user_id = ?",
+        amount,
+        user_id,
+    )
+    .execute(&database)
+    .await
+    .expect("Couldn't set bomb amount");
+}
+
+/**
+Increase the number of times a user has stepped on a bomb.
+**/
+pub async fn increase_bombs_exploded(user_id: &str) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "UPDATE user SET bombs_exploded = bombs_exploded + 1 WHERE user_id = ?",
+        user_id,
+    )
+    .execute(&database)
+    .await
+    .expect("Couldn't increase bomb amount");
+}
+
+/**
 Get the users score formated for userInfo.
 **/
 pub async fn get_score(user: &str) -> i64 {

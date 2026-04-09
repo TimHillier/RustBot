@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE user SET bombs_exploded = ? WHERE user_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c4f67f2617a169a22e32611420b72ef27a7ac7b7a3ccef3126cdba112ba9e00c"
+}

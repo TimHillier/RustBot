@@ -1,5 +1,6 @@
 [![Build](https://github.com/TimHillier/RustBot/actions/workflows/docker-build-push.yml/badge.svg)](https://github.com/TimHillier/RustBot/actions/workflows/docker-build-push.yml)
-[![Formating](https://github.com/TimHillier/RustBot/actions/workflows/rust-cs-fmt.yml/badge.svg)](https://github.com/TimHillier/RustBot/actions/workflows/rust-cs-fmt.yml)
+[![Format](https://github.com/TimHillier/RustBot/actions/workflows/rust-cs-fmt.yml/badge.svg)](https://github.com/TimHillier/RustBot/actions/workflows/rust-cs-fmt.yml)
+[![Version check](https://github.com/TimHillier/RustBot/actions/workflows/check-version.yml/badge.svg)](https://github.com/TimHillier/RustBot/actions/workflows/check-version.yml)
 
 # RustBot
 
@@ -7,7 +8,7 @@ A Discord bot written in Rust that implements a community scoring and trading sy
 
 ## Description
 
-RustBot is a feature-rich Discord bot that gamifies community interaction through a scoring system. Users receive points when others react to their messages with +2 emojis, and lose points with -2 emojis. The bot tracks scores in a SQLite database and provides various commands for viewing leaderboards, trading points, and managing a virtual economy through a shop system.
+RustBot is a feature-rich Discord bot that gamifies community interaction through a scoring system. Users receive points when others react to their messages with +2 emojis, and lose points with -2 emojis. The bot tracks scores in a SQLite database and provides commands for leaderboards, trading points, and a shop. It also supports image rotation (including automatic rotation on some messages), RuneScape Grand Exchange price lookups with custom aliases, and admin utilities.
 
 ## Libraries Used
 
@@ -33,7 +34,18 @@ All commands use the `!` prefix.
 
 - **`!shop`** (alias: `!store`) - Displays the shop with all available items, their prices, and descriptions.
   - **`!shop buy <symbol>`** - Purchases an item from the shop using the item's symbol. Validates that the user has enough +2 emojis to make the purchase.
-- **`!item_count <symbol>`** (aliases: `!count`, `!getCount`) - Shows the current count of a specific shop item.
+- **`!count <symbol>`** (aliases: `!itemCount`, `!getCount`) - Shows the current count of a specific shop item.
+
+### Image Commands
+
+- **`!rotate`** - Rotates an image 180°. Use as a reply to a message that has an image attachment (PNG or JPEG). The bot may also automatically rotate images on messages in some channels.
+
+### RuneScape / Grand Exchange Commands
+
+- **`!grand_exchange <item>`** (aliases: `!price`, `!ge`, `!rsge`, `!rsprice`) - Fetches the current Grand Exchange price for an item. Supports aliases from `ge_set_alias`.
+- **`!grand_exchange_history <item>`** (aliases: `!priceHistory`, `!ph`, `!history`, `!hst`) - Fetches price history for an item.
+- **`!ge_set_alias <alias> <item>`** (aliases: `!ge-alias`, `!gealias`, `!gea`) - Sets a custom alias for an item name when querying GE prices.
+- **`!lookup_alias <alias>`** (aliases: `!ge-lookup-alias`, `!lookup`, `!?`, `!alias`, `!what`) - Looks up which item an alias maps to.
 
 ### Fun Commands
 
@@ -47,11 +59,14 @@ All commands use the `!` prefix.
 ## Features
 
 - **Reaction-based Scoring**: Automatically tracks scores when users react with +2 or -2 emojis
-- **Database Persistence**: Uses SQLite to store user scores, trade logs, and shop data
+- **Database Persistence**: Uses SQLite to store user scores, trade logs, shop data, and GE aliases
 - **Trade System**: Users can trade +2 emojis with each other, affecting their scores
 - **Shop System**: Virtual economy where users can purchase items using accumulated +2 emojis
 - **Leaderboards**: Track top performers in the community
+- **Image Rotation**: Rotate images 180° via `!rotate` (reply to an image) or automatically on messages with image attachments
+- **RuneScape Grand Exchange**: Look up item prices and history; custom aliases for item names
 - **Migration Support**: Database migrations managed through sqlx-cli
+- **CI**: Format/lint (rustfmt, clippy), version-bump check on PRs, and Docker build
 
 ## Development
 
