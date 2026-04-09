@@ -2,6 +2,7 @@ pub mod admin;
 pub mod help;
 pub mod image;
 pub mod judge;
+pub mod misc;
 pub mod runescape;
 pub mod score;
 pub mod shop;

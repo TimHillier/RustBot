@@ -9,6 +9,7 @@ use crate::commands::admin::*;
 use crate::commands::help::*;
 use crate::commands::image::*;
 use crate::commands::judge::*;
+use crate::commands::misc::*;
 use crate::commands::runescape::*;
 use crate::commands::score::*;
 use crate::commands::shop::*;
@@ -17,7 +18,7 @@ use crate::commands::trade::*;
 
 use crate::bot_types::{Data, Error};
 
-use crate::bot_utils::{get_count, is_bot, reset_count};
+use crate::bot_utils::{get_count, increase_bombs_exploded, is_bot, reset_count, score_update};
 use crate::emoji::get_emoji;
 use poise::serenity_prelude;
 use rand::Rng;
@@ -33,6 +34,7 @@ use serenity::prelude::*;
 
 struct Handler;
 const MAX_BOMB_RANGE: i64 = 300;
+const BOMB_POINTS_LOST: i16 = 20;
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -60,13 +62,14 @@ impl EventHandler for Handler {
                 .await
                 .unwrap();
             reset_count("mine").await;
+            increase_bombs_exploded(&msg.author.id.to_string()).await;
+            score_update(&msg.author.id.to_string(), -BOMB_POINTS_LOST).await;
             msg.reply(
                 &_ctx.http,
                 format!(
-                    "{} oh nyo, >w< wooks wike somebwody got bwown up {}/{}",
+                    "{} oh nyo, >w< wooks wike somebwody got bwown up and lost {} points. ",
                     get_emoji("winner"),
-                    current_number_of_bombs,
-                    MAX_BOMB_RANGE,
+                    BOMB_POINTS_LOST,
                 ),
             )
             .await
@@ -75,8 +78,8 @@ impl EventHandler for Handler {
 
         // Rotate the image sometimes.
         if !msg.attachments.is_empty() {
-            let mut _rng = rand::rng().random_range(0..=1000);
-            let lucky_numbers = [5];
+            let mut _rng = rand::rng().random_range(0..=100);
+            let lucky_numbers = [7];
             if lucky_numbers.contains(&_rng) {
                 rotate_image_directly(&_ctx.http, msg.channel_id, &msg)
                     .await
@@ -116,7 +119,7 @@ impl EventHandler for Handler {
             .await;
         }
 
-        bot_utils::score_update(&message.id.to_string(), score).await;
+        score_update(&message.id.to_string(), score).await;
     }
 
     async fn reaction_remove(&self, _ctx: Context, _removed_reaction: Reaction) {
@@ -223,6 +226,8 @@ async fn main() {
                 grand_exchange_history(),
                 ge_set_alias(),
                 lookup_alias(),
+                set_bombs_for_user(),
+                bomb_count(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
