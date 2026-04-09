@@ -18,7 +18,9 @@ use crate::commands::trade::*;
 
 use crate::bot_types::{Data, Error};
 
-use crate::bot_utils::{get_count, increase_bombs_exploded, is_bot, reset_count, score_update};
+use crate::bot_utils::{
+    get_count, get_current_bot_id, increase_bombs_exploded, is_bot, reset_count, score_update,
+};
 use crate::emoji::get_emoji;
 use poise::serenity_prelude;
 use rand::Rng;
@@ -55,6 +57,7 @@ impl EventHandler for Handler {
         let mut _rng = rand::rng().random_range(0..MAX_BOMB_RANGE);
         let current_number_of_bombs = get_count("mine").await;
         if _rng <= current_number_of_bombs {
+            let current_bot_id = get_current_bot_id().await.to_string();
             let mut member = get_member(_ctx.clone(), msg.clone()).await;
             let time_out_time = get_time_out_time();
             member
@@ -63,11 +66,17 @@ impl EventHandler for Handler {
                 .unwrap();
             reset_count("mine").await;
             increase_bombs_exploded(&msg.author.id.to_string()).await;
-            score_update(&msg.author.id.to_string(), -BOMB_POINTS_LOST).await;
+            do_transaction(
+                &msg.author.id.to_string(),
+                &current_bot_id,
+                BOMB_POINTS_LOST,
+            )
+            .await;
+
             msg.reply(
                 &_ctx.http,
                 format!(
-                    "{} oh nyo, >w< wooks wike somebwody got bwown up and lost {} points. ",
+                    "{} oh nyo, >w< wooks wike somebwody got bwown up and wost {} pwoints. ",
                     get_emoji("winner"),
                     BOMB_POINTS_LOST,
                 ),
