@@ -35,7 +35,7 @@ use serenity::model::id::{ChannelId, GuildId, MessageId};
 use serenity::prelude::*;
 
 struct Handler;
-const MAX_BOMB_RANGE: i64 = 300;
+const MAX_BOMB_RANGE: i64 = 400;
 const BOMB_POINTS_LOST: i16 = 20;
 
 #[async_trait]
