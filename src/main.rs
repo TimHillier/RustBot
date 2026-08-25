@@ -49,6 +49,7 @@ impl EventHandler for Handler {
     */
     async fn message(&self, _ctx: Context, msg: Message) {
         bot_utils::create_in_db(&msg.author.id.to_string(), &msg.author.name).await;
+        bot_utils::add_message_to_db(msg.clone()).await;
 
         if is_bot(msg.author.id.to_string()) {
             return;

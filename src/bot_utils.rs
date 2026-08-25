@@ -2,8 +2,11 @@ use crate::UserInfo;
 use crate::commands::shop::ItemInfo;
 use rand::Rng;
 use serde::Deserialize;
+use serenity::model::channel::{Attachment, Message};
 use sqlx::{Pool, Sqlite};
 use std::fs;
+use std::path::{Path, PathBuf};
+use tokio::io::AsyncWriteExt;
 
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
@@ -400,4 +403,153 @@ pub async fn get_current_bot_id() -> String {
         return secrets_toml.live_bot_user_id;
     }
     secrets_toml.testing_bot_user_id
+}
+
+const MESSAGE_ATTACHMENTS_DIR: &str = "data/message_attachments";
+const MAX_ATTACHMENT_BYTES: u64 = 50_000_000;
+
+pub async fn add_message_to_db(message: Message) {
+    let database = connect_to_database().await;
+    let message_id = message.id.to_string();
+    let user_id = message.author.id.to_string();
+    let timestamp = message.timestamp.to_string();
+    let channel_id = message.channel_id.to_string();
+    let guild_id = message.guild_id.map(|id| id.to_string());
+    let author_name = message.author.name.clone();
+    let author_global_name = message.author.global_name.clone();
+    let author_is_bot = i64::from(message.author.bot);
+    let kind = format!("{:?}", message.kind);
+    let referenced_message_id = message
+        .message_reference
+        .as_ref()
+        .and_then(|reference| reference.message_id)
+        .map(|id| id.to_string());
+    let edited_timestamp = message.edited_timestamp.map(|ts| ts.to_string());
+    sqlx::query!(
+        "INSERT INTO messages (message_id, user_id, message_content, timestamp, channel_id, guild_id, author_name, author_global_name, is_bot, kind, referenced_message_id, edited_timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        message_id,
+        user_id,
+        message.content,
+        timestamp,
+        channel_id,
+        guild_id,
+        author_name,
+        author_global_name,
+        author_is_bot,
+        kind,
+        referenced_message_id,
+        edited_timestamp,
+    )
+    .execute(&database)
+    .await
+    .unwrap();
+
+    save_message_attachments(&database, &message_id, &message.attachments).await;
+}
+
+async fn save_message_attachments(
+    database: &Pool<Sqlite>,
+    message_id: &str,
+    attachments: &[Attachment],
+) {
+    for attachment in attachments {
+        let attachment_id = attachment.id.to_string();
+        let filename = attachment.filename.clone();
+        let content_type = attachment.content_type.clone();
+        let size = i64::from(attachment.size);
+        let url = attachment.url.clone();
+        let proxy_url = attachment.proxy_url.clone();
+        let width = attachment.width.map(i64::from);
+        let height = attachment.height.map(i64::from);
+        let local_path = download_message_attachment(message_id, attachment).await;
+
+        sqlx::query!(
+            "INSERT INTO message_attachments (attachment_id, message_id, filename, content_type, size, url, proxy_url, width, height, local_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            attachment_id,
+            message_id,
+            filename,
+            content_type,
+            size,
+            url,
+            proxy_url,
+            width,
+            height,
+            local_path,
+        )
+        .execute(database)
+        .await
+        .expect("Couldn't insert message attachment.");
+    }
+}
+
+fn attachment_file_extension(filename: &str) -> String {
+    Path::new(filename)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .filter(|ext| {
+            !ext.is_empty() && ext.len() <= 8 && ext.chars().all(|c| c.is_ascii_alphanumeric())
+        })
+        .map(|ext| format!(".{ext}"))
+        .unwrap_or_default()
+}
+
+async fn download_message_attachment(message_id: &str, attachment: &Attachment) -> Option<String> {
+    if u64::from(attachment.size) > MAX_ATTACHMENT_BYTES {
+        eprintln!(
+            "Skipping download for attachment {}: size {} exceeds limit",
+            attachment.id, attachment.size
+        );
+        return None;
+    }
+
+    let extension = attachment_file_extension(&attachment.filename);
+    let dir = PathBuf::from(MESSAGE_ATTACHMENTS_DIR).join(message_id);
+    if let Err(err) = tokio::fs::create_dir_all(&dir).await {
+        eprintln!(
+            "Failed to create attachment directory {}: {err}",
+            dir.display()
+        );
+        return None;
+    }
+
+    let local_path = dir.join(format!("{}{}", attachment.id, extension));
+    let url = if attachment.url.is_empty() {
+        attachment.proxy_url.as_str()
+    } else {
+        attachment.url.as_str()
+    };
+
+    match save_url_to_file(url, &local_path).await {
+        Ok(()) => Some(local_path.to_string_lossy().into_owned()),
+        Err(err) => {
+            eprintln!(
+                "Failed to download attachment {} from {}: {err}",
+                attachment.id, url
+            );
+            None
+        }
+    }
+}
+
+async fn save_url_to_file(
+    url: &str,
+    file_path: &Path,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let response = reqwest::get(url).await?;
+    if !response.status().is_success() {
+        return Err(response.error_for_status().unwrap_err().into());
+    }
+    if response
+        .content_length()
+        .is_some_and(|len| len > MAX_ATTACHMENT_BYTES)
+    {
+        return Err("File too large.".into());
+    }
+    let content = response.bytes().await?;
+    if content.len() as u64 > MAX_ATTACHMENT_BYTES {
+        return Err("File too large.".into());
+    }
+    let mut file = tokio::fs::File::create(file_path).await?;
+    file.write_all(&content).await?;
+    Ok(())
 }
