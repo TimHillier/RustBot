@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO messages (message_id, user_id, message_content, timestamp, channel_id, guild_id, author_name, author_global_name, is_bot, kind, referenced_message_id, edited_timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 12
+    },
+    "nullable": []
+  },
+  "hash": "e5bdc2ad29a1f5a6f9b67b78dc09394732fb98ac51d74ca4f4c7ca7d49c11763"
+}
