@@ -3,6 +3,7 @@ mod bot_utils;
 mod commands;
 mod emoji;
 mod runescape_utils;
+mod status;
 
 // Commands;
 use crate::commands::admin::*;
@@ -34,7 +35,10 @@ use serenity::model::gateway::Ready;
 use serenity::model::id::{ChannelId, GuildId, MessageId};
 use serenity::prelude::*;
 
-struct Handler;
+struct Handler {
+    status: status::StatusState,
+}
+
 const MAX_BOMB_RANGE: i64 = 400;
 const BOMB_POINTS_LOST: i16 = 20;
 
@@ -168,6 +172,8 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
+        self.status
+        .set_ready(ready.user.name.clone(), ready.user.face());
         println!(
             "{} is connected! Environment: {}",
             ready.user.name,
@@ -205,6 +211,8 @@ async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &
 #[tokio::main]
 async fn main() {
     let token = bot_utils::get_secret();
+    let status = status::StatusState::new();
+    tokio::spawn(status::serve(status.clone()));
 
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES
@@ -255,7 +263,7 @@ async fn main() {
 
     let client = serenity_prelude::ClientBuilder::new(token, intents)
         .framework(framework)
-        .event_handler(Handler)
+        .event_handler(Handler { status })
         .await;
     client.unwrap().start().await.unwrap();
 }

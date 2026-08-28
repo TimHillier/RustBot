@@ -35,3 +35,5 @@ thiserror = "1.0.69"
 url = "2.5.7"
 urlencoding = "2.1.3"
 image = "0.25.10"
+axum = { version = "0.8", features = ["json"] }
+
