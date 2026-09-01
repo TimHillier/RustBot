@@ -70,7 +70,7 @@ impl EventHandler for Handler {
                 .await
                 .unwrap();
             reset_count("mine").await;
-            increase_bombs_exploded(&msg.author.id.to_string()).await;
+            increase_bombs_exploded(&msg.author.id.to_string(), msg.timestamp).await;
             do_transaction(
                 &msg.author.id.to_string(),
                 &current_bot_id,
@@ -228,6 +228,7 @@ async fn main() {
             commands: vec![
                 ping(),
                 version(),
+                explode(),
                 judge(),
                 score(),
                 top(),

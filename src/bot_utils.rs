@@ -7,6 +7,7 @@ use sqlx::{Pool, Sqlite};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tokio::io::AsyncWriteExt;
+use serenity::model::timestamp::Timestamp;
 
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
@@ -266,10 +267,12 @@ pub async fn set_bombs_exploded(user_id: &str, amount: i16) {
 /**
 Increase the number of times a user has stepped on a bomb.
 **/
-pub async fn increase_bombs_exploded(user_id: &str) {
+pub async fn increase_bombs_exploded(user_id: &str, timestamp: Timestamp) {
     let database = connect_to_database().await;
+    let timestamp = timestamp.to_string();
     sqlx::query!(
-        "UPDATE user SET bombs_exploded = bombs_exploded + 1 WHERE user_id = ?",
+        "UPDATE user SET bombs_exploded = bombs_exploded + 1, last_bomb_time = ? WHERE user_id = ?",
+        timestamp,
         user_id,
     )
     .execute(&database)
@@ -523,8 +526,10 @@ async fn download_message_attachment(
 
     let extension = attachment_file_extension(&attachment.filename);
     let message_attachments_dir = get_token_from_toml("MESSAGE_ATTACHMENTS_DIR");
+    let current_date = chrono::Utc::now().format("%Y-%m-%d").to_string();
     let dir = PathBuf::from(message_attachments_dir)
         .join(author_name)
+        .join(current_date)
         .join(message_id);
     if let Err(err) = tokio::fs::create_dir_all(&dir).await {
         eprintln!(
