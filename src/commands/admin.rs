@@ -1,9 +1,11 @@
 use crate::bot_types::{_Context as Context, Error};
-use crate::bot_utils::set_bombs_exploded;
 use poise::serenity_prelude as serenity;
+use crate::bot_utils::{
+    increase_bombs_exploded, reset_count, set_bombs_exploded,
+};
 
 /// Just a test command. Does nothing.
-#[poise::command(prefix_command)]
+#[poise::command(prefix_command, required_permissions = "ADMINISTRATOR")]
 pub async fn ping(
     ctx: Context<'_>,
     #[description = "Selected User"] user: Option<serenity::User>,
@@ -43,5 +45,23 @@ pub async fn set_bombs_for_user(
 pub async fn version(ctx: Context<'_>) -> Result<(), Error> {
     let response = format!("The bot is running version {}", env!("CARGO_PKG_VERSION"));
     ctx.reply(response).await?;
+    Ok(())
+}
+
+
+/// Explodes the current User
+#[poise::command(prefix_command, required_permissions = "ADMINISTRATOR")]
+pub async fn explode(ctx: Context<'_>) -> Result<(), Error> {
+    let msg = ctx.channel_id().message(&ctx.http(), ctx.id()).await?;
+    let user = if let Some(referenced) = &msg.referenced_message {
+        referenced.author.clone()
+    } else {
+        ctx.author().clone()
+    };
+
+    let user_id = user.id.to_string();
+    reset_count("mine").await;
+    increase_bombs_exploded(user_id.as_str(), msg.timestamp).await;
+    ctx.reply(format!("Test bomb set off for {}", user.name)).await?;
     Ok(())
 }

@@ -2,8 +2,12 @@ use crate::UserInfo;
 use crate::commands::shop::ItemInfo;
 use rand::Rng;
 use serde::Deserialize;
+use serenity::model::channel::{Attachment, Message};
 use sqlx::{Pool, Sqlite};
 use std::fs;
+use std::path::{Path, PathBuf};
+use tokio::io::AsyncWriteExt;
+use serenity::model::timestamp::Timestamp;
 
 #[derive(Debug, Deserialize)]
 struct SecretsToml {
@@ -17,6 +21,22 @@ struct SecretsToml {
 pub fn get_toml() -> String {
     fs::read_to_string("data/Secrets.toml").expect("Failed to read TOML")
 }
+
+pub fn get_token_from_toml(token_name: &str) -> String {
+    let toml_str = get_toml();
+    let secrets: toml::Table = toml::from_str(&toml_str).expect("Failed to decode toml");
+    let value = secrets
+        .get(token_name)
+        .unwrap_or_else(|| panic!("{token_name} not present in Secrets.toml"));
+    match value {
+        toml::Value::String(s) => s.clone(),
+        toml::Value::Integer(i) => i.to_string(),
+        toml::Value::Float(f) => f.to_string(),
+        toml::Value::Boolean(b) => b.to_string(),
+        other => other.to_string(),
+    }
+}
+
 pub fn get_secret() -> String {
     let toml_str = get_toml();
     let secrets_toml: SecretsToml = toml::from_str(&toml_str).expect("Failed to decode toml");
@@ -247,10 +267,12 @@ pub async fn set_bombs_exploded(user_id: &str, amount: i16) {
 /**
 Increase the number of times a user has stepped on a bomb.
 **/
-pub async fn increase_bombs_exploded(user_id: &str) {
+pub async fn increase_bombs_exploded(user_id: &str, timestamp: Timestamp) {
     let database = connect_to_database().await;
+    let timestamp = timestamp.to_string();
     sqlx::query!(
-        "UPDATE user SET bombs_exploded = bombs_exploded + 1 WHERE user_id = ?",
+        "UPDATE user SET bombs_exploded = bombs_exploded + 1, last_bomb_time = ? WHERE user_id = ?",
+        timestamp,
         user_id,
     )
     .execute(&database)
@@ -400,4 +422,216 @@ pub async fn get_current_bot_id() -> String {
         return secrets_toml.live_bot_user_id;
     }
     secrets_toml.testing_bot_user_id
+}
+
+pub async fn add_message_to_db(message: Message) {
+    let database = connect_to_database().await;
+    let message_id = message.id.to_string();
+    let user_id = message.author.id.to_string();
+    let timestamp = message.timestamp.to_string();
+    let channel_id = message.channel_id.to_string();
+    let author_name = message.author.name.clone();
+    let author_global_name = message.author.global_name.clone();
+    let author_is_bot = i64::from(message.author.bot);
+    let kind = format!("{:?}", message.kind);
+    let referenced_message_id = message
+        .message_reference
+        .as_ref()
+        .and_then(|reference| reference.message_id)
+        .map(|id| id.to_string());
+    sqlx::query!(
+        "INSERT INTO messages (message_id, user_id, message_content, timestamp, channel_id, author_name, author_global_name, is_bot, kind, referenced_message_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        message_id,
+        user_id,
+        message.content,
+        timestamp,
+        channel_id,
+        author_name,
+        author_global_name,
+        author_is_bot,
+        kind,
+        referenced_message_id,
+    )
+    .execute(&database)
+    .await
+    .unwrap();
+
+    save_message_attachments(
+        &database,
+        &message_id,
+        &user_id,
+        &author_name,
+        &message.attachments,
+    )
+    .await;
+}
+
+async fn save_message_attachments(
+    database: &Pool<Sqlite>,
+    message_id: &str,
+    user_id: &str,
+    author_name: &str,
+    attachments: &[Attachment],
+) {
+    for attachment in attachments {
+        let attachment_id = attachment.id.to_string();
+        let filename = attachment.filename.clone();
+        let content_type = attachment.content_type.clone();
+        let size = i64::from(attachment.size);
+        let local_path = download_message_attachment(message_id, attachment, author_name).await;
+
+        sqlx::query!(
+            "INSERT INTO message_attachments (attachment_id, message_id, user_id, author_name, filename, content_type, size, local_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            attachment_id,
+            message_id,
+            user_id,
+            author_name,
+            filename,
+            content_type,
+            size,
+            local_path,
+        )
+        .execute(database)
+        .await
+        .expect("Couldn't insert message attachment.");
+    }
+}
+
+fn attachment_file_extension(filename: &str) -> String {
+    Path::new(filename)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .filter(|ext| {
+            !ext.is_empty() && ext.len() <= 8 && ext.chars().all(|c| c.is_ascii_alphanumeric())
+        })
+        .map(|ext| format!(".{ext}"))
+        .unwrap_or_default()
+}
+
+async fn download_message_attachment(
+    message_id: &str,
+    attachment: &Attachment,
+    author_name: &str,
+) -> Option<String> {
+    let max_attachment_bytes = get_token_from_toml("MAX_ATTACHMENT_BYTES")
+        .parse::<u64>()
+        .unwrap();
+    if u64::from(attachment.size) > max_attachment_bytes {
+        eprintln!(
+            "Skipping download for attachment {}: size {} exceeds limit",
+            attachment.id, attachment.size
+        );
+        return None;
+    }
+
+    let extension = attachment_file_extension(&attachment.filename);
+    let message_attachments_dir = get_token_from_toml("MESSAGE_ATTACHMENTS_DIR");
+    let current_date = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let dir = PathBuf::from(message_attachments_dir)
+        .join(author_name)
+        .join(current_date)
+        .join(message_id);
+    if let Err(err) = tokio::fs::create_dir_all(&dir).await {
+        eprintln!(
+            "Failed to create attachment directory {}: {err}",
+            dir.display()
+        );
+        return None;
+    }
+
+    let local_path = dir.join(format!("{}{}", attachment.id, extension));
+    let url = if attachment.url.is_empty() {
+        attachment.proxy_url.as_str()
+    } else {
+        attachment.url.as_str()
+    };
+
+    match save_url_to_file(url, &local_path).await {
+        Ok(()) => Some(local_path.to_string_lossy().into_owned()),
+        Err(err) => {
+            eprintln!(
+                "Failed to download attachment {} from {}: {err}",
+                attachment.id, url
+            );
+            None
+        }
+    }
+}
+
+async fn save_url_to_file(
+    url: &str,
+    file_path: &Path,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let response = reqwest::get(url).await?;
+    let max_attachment_bytes = get_token_from_toml("MAX_ATTACHMENT_BYTES")
+        .parse::<u64>()
+        .unwrap();
+    if !response.status().is_success() {
+        return Err(response.error_for_status().unwrap_err().into());
+    }
+    if response
+        .content_length()
+        .is_some_and(|len| len > max_attachment_bytes)
+    {
+        return Err("File too large.".into());
+    }
+    let content = response.bytes().await?;
+    if content.len() as u64 > max_attachment_bytes {
+        return Err("File too large.".into());
+    }
+    let mut file = tokio::fs::File::create(file_path).await?;
+    file.write_all(&content).await?;
+    Ok(())
+}
+
+pub async fn add_vote(message_id: &str, voter_id: &str, value: i16) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "INSERT INTO message_votes (message_id, voter_id, value) VALUES (?, ?, ?) ON CONFLICT(message_id, voter_id) DO UPDATE SET value = message_votes.value + excluded.value",
+        message_id,
+        voter_id,
+        value,
+    )
+    .execute(&database)
+    .await
+    .expect("Couldn't add vote.");
+}
+
+pub async fn remove_vote(message_id: &str, voter_id: &str, value: i16) {
+    let database = connect_to_database().await;
+    let existing = sqlx::query!(
+        "SELECT value FROM message_votes WHERE message_id = ? AND voter_id = ?",
+        message_id,
+        voter_id,
+    )
+    .fetch_optional(&database)
+    .await
+    .expect("Couldn't find vote.");
+
+    let Some(row) = existing else {
+        return;
+    };
+
+    if row.value == i64::from(value) {
+        sqlx::query!(
+            "DELETE FROM message_votes WHERE message_id = ? AND voter_id = ?",
+            message_id,
+            voter_id,
+        )
+        .execute(&database)
+        .await
+        .expect("Couldn't remove vote.");
+        return;
+    }
+
+    let new_value = row.value - i64::from(value);
+    sqlx::query!(
+        "UPDATE message_votes SET value = ? WHERE message_id = ? AND voter_id = ?",
+        new_value,
+        message_id,
+        voter_id,
+    )
+    .execute(&database)
+    .await
+    .expect("Couldn't update vote.");
 }

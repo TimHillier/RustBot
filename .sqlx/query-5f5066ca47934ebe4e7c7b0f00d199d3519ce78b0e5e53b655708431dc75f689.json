@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO message_votes (message_id, voter_id, value) VALUES (?, ?, ?) ON CONFLICT(message_id, voter_id) DO UPDATE SET value = message_votes.value + excluded.value",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "5f5066ca47934ebe4e7c7b0f00d199d3519ce78b0e5e53b655708431dc75f689"
+}

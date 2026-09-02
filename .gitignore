@@ -4,3 +4,12 @@
 .env
 .idea/
 *.DS_Store
+.venv/
+data/discord_images/
+/data/backup/
+discord_images/
+data/message_attachments/
+data/OLD/
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal

@@ -3,6 +3,7 @@ mod bot_utils;
 mod commands;
 mod emoji;
 mod runescape_utils;
+mod status;
 
 // Commands;
 use crate::commands::admin::*;
@@ -19,7 +20,7 @@ use crate::commands::trade::*;
 use crate::bot_types::{Data, Error};
 
 use crate::bot_utils::{
-    get_count, get_current_bot_id, increase_bombs_exploded, is_bot, reset_count, score_update,
+    get_count, get_current_bot_id, increase_bombs_exploded, is_bot, reset_count, score_update, add_vote, remove_vote
 };
 use crate::emoji::get_emoji;
 use poise::serenity_prelude;
@@ -34,7 +35,10 @@ use serenity::model::gateway::Ready;
 use serenity::model::id::{ChannelId, GuildId, MessageId};
 use serenity::prelude::*;
 
-struct Handler;
+struct Handler {
+    status: status::StatusState,
+}
+
 const MAX_BOMB_RANGE: i64 = 400;
 const BOMB_POINTS_LOST: i16 = 20;
 
@@ -49,6 +53,7 @@ impl EventHandler for Handler {
     */
     async fn message(&self, _ctx: Context, msg: Message) {
         bot_utils::create_in_db(&msg.author.id.to_string(), &msg.author.name).await;
+        bot_utils::add_message_to_db(msg.clone()).await;
 
         if is_bot(msg.author.id.to_string()) {
             return;
@@ -65,7 +70,7 @@ impl EventHandler for Handler {
                 .await
                 .unwrap();
             reset_count("mine").await;
-            increase_bombs_exploded(&msg.author.id.to_string()).await;
+            increase_bombs_exploded(&msg.author.id.to_string(), msg.timestamp).await;
             do_transaction(
                 &msg.author.id.to_string(),
                 &current_bot_id,
@@ -128,7 +133,11 @@ impl EventHandler for Handler {
             .await;
         }
 
-        score_update(&message.id.to_string(), score).await;
+        if score != 0 {
+            add_vote(&_add_reaction.message_id.to_string(), &_add_reaction.user_id.unwrap().to_string(), score).await;
+            score_update(&message.id.to_string(), score).await;
+        }
+
     }
 
     async fn reaction_remove(&self, _ctx: Context, _removed_reaction: Reaction) {
@@ -163,10 +172,15 @@ impl EventHandler for Handler {
             .await;
         }
 
-        bot_utils::score_update(&message.id.to_string(), -score).await;
+        if score != 0 {
+            remove_vote(&_removed_reaction.message_id.to_string(), &_removed_reaction.user_id.unwrap().to_string(), score).await;
+            score_update(&message.id.to_string(), -score).await;
+        }
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
+        self.status
+        .set_ready(ready.user.name.clone(), ready.user.face());
         println!(
             "{} is connected! Environment: {}",
             ready.user.name,
@@ -204,6 +218,8 @@ async fn unknown_command(_ctx: &Context, _msg: &Message, unknown_command_name: &
 #[tokio::main]
 async fn main() {
     let token = bot_utils::get_secret();
+    let status = status::StatusState::new();
+    tokio::spawn(status::serve(status.clone()));
 
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES
@@ -219,6 +235,7 @@ async fn main() {
             commands: vec![
                 ping(),
                 version(),
+                explode(),
                 judge(),
                 score(),
                 top(),
@@ -254,7 +271,7 @@ async fn main() {
 
     let client = serenity_prelude::ClientBuilder::new(token, intents)
         .framework(framework)
-        .event_handler(Handler)
+        .event_handler(Handler { status })
         .await;
     client.unwrap().start().await.unwrap();
 }
