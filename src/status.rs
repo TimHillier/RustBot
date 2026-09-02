@@ -1,4 +1,4 @@
-use axum::{Json, extract::State, routing::get};
+use axum::{Json, routing::get};
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;

@@ -20,7 +20,7 @@ use crate::commands::trade::*;
 use crate::bot_types::{Data, Error};
 
 use crate::bot_utils::{
-    get_count, get_current_bot_id, increase_bombs_exploded, is_bot, reset_count, score_update,
+    get_count, get_current_bot_id, increase_bombs_exploded, is_bot, reset_count, score_update, add_vote, remove_vote
 };
 use crate::emoji::get_emoji;
 use poise::serenity_prelude;
@@ -133,7 +133,11 @@ impl EventHandler for Handler {
             .await;
         }
 
-        score_update(&message.id.to_string(), score).await;
+        if score != 0 {
+            add_vote(&_add_reaction.message_id.to_string(), &_add_reaction.user_id.unwrap().to_string(), score).await;
+            score_update(&message.id.to_string(), score).await;
+        }
+
     }
 
     async fn reaction_remove(&self, _ctx: Context, _removed_reaction: Reaction) {
@@ -168,7 +172,10 @@ impl EventHandler for Handler {
             .await;
         }
 
-        bot_utils::score_update(&message.id.to_string(), -score).await;
+        if score != 0 {
+            remove_vote(&_removed_reaction.message_id.to_string(), &_removed_reaction.user_id.unwrap().to_string(), score).await;
+            score_update(&message.id.to_string(), -score).await;
+        }
     }
 
     async fn ready(&self, _: Context, ready: Ready) {

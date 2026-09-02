@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM message_votes WHERE message_id = ? AND voter_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "42c4bfc67522be424601462fc165464dc4ae38d176ffa57f311c5e9235bbaa8a"
+}

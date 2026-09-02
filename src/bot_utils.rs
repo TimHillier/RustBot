@@ -583,3 +583,55 @@ async fn save_url_to_file(
     file.write_all(&content).await?;
     Ok(())
 }
+
+pub async fn add_vote(message_id: &str, voter_id: &str, value: i16) {
+    let database = connect_to_database().await;
+    sqlx::query!(
+        "INSERT INTO message_votes (message_id, voter_id, value) VALUES (?, ?, ?) ON CONFLICT(message_id, voter_id) DO UPDATE SET value = message_votes.value + excluded.value",
+        message_id,
+        voter_id,
+        value,
+    )
+    .execute(&database)
+    .await
+    .expect("Couldn't add vote.");
+}
+
+pub async fn remove_vote(message_id: &str, voter_id: &str, value: i16) {
+    let database = connect_to_database().await;
+    let existing = sqlx::query!(
+        "SELECT value FROM message_votes WHERE message_id = ? AND voter_id = ?",
+        message_id,
+        voter_id,
+    )
+    .fetch_optional(&database)
+    .await
+    .expect("Couldn't find vote.");
+
+    let Some(row) = existing else {
+        return;
+    };
+
+    if row.value == i64::from(value) {
+        sqlx::query!(
+            "DELETE FROM message_votes WHERE message_id = ? AND voter_id = ?",
+            message_id,
+            voter_id,
+        )
+        .execute(&database)
+        .await
+        .expect("Couldn't remove vote.");
+        return;
+    }
+
+    let new_value = row.value - i64::from(value);
+    sqlx::query!(
+        "UPDATE message_votes SET value = ? WHERE message_id = ? AND voter_id = ?",
+        new_value,
+        message_id,
+        voter_id,
+    )
+    .execute(&database)
+    .await
+    .expect("Couldn't update vote.");
+}

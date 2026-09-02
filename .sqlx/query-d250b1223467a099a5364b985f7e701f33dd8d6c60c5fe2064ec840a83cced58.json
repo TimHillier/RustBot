@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE message_votes SET value = ? WHERE message_id = ? AND voter_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "d250b1223467a099a5364b985f7e701f33dd8d6c60c5fe2064ec840a83cced58"
+}
